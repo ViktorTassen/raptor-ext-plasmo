@@ -1,45 +1,53 @@
-const BRIGHT_DATA_USERNAME = "brd-customer-hl_581f5b31-zone-datacenter_proxy1" // Your Bright Data username
-const BRIGHT_DATA_PASSWORD = "y2zb42a0desr" // Your Bright Data password
-const ZONE = "datacenter_proxy1" // The zone you want to use
 
+// Bright Data credentials and configuration
+const PROXY_HOST = "brd.superproxy.io"
+const PROXY_PORT = 33335
+const PROXY_USERNAME = process.env.PLASMO_PUBLIC_PROXY_USERNAME
+const PROXY_PASSWORD = process.env.PLASMO_PUBLIC_PROXY_PASSWORD
 
-// Add domains that should use the proxy
-const PROXY_DOMAINS = [
-  "turo.com",
-  "api.example.com"
-  // Add more domains as needed
-]
+// Create PAC script
+const pacScript = `
+  function FindProxyForURL(url, host) {
+    return "PROXY ${PROXY_HOST}:${PROXY_PORT}";
+  }
+`
 
-// Configure proxy settings
+// Configure proxy settings using PAC script
 const config = {
-  mode: "fixed_servers",
-  rules: {
-    singleProxy: {
-      scheme: "http",
-      host: `brd.superproxy.io:33335`,
-      port: 20000
-    },
-    bypassList: []
+  mode: "pac_script",
+  pacScript: {
+    data: pacScript
   }
 }
 
-// Set up the proxy configuration using chrome.proxy API
+// Set up the proxy configuration
 chrome.proxy.settings.set(
-  { value: config, scope: "regular" },
+  { 
+    value: config, 
+    scope: "regular" 
+  },
   () => {
-    console.log("Proxy settings updated")
+    if (chrome.runtime.lastError) {
+      console.error("Proxy settings error:", chrome.runtime.lastError)
+    } else {
+      console.log("Proxy settings updated successfully")
+    }
   }
 )
 
-// Set up proxy authentication
+// Handle proxy authentication
 chrome.webRequest.onAuthRequired.addListener(
   (details, callback) => {
-    callback({
-      authCredentials: {
-        username: BRIGHT_DATA_USERNAME,
-        password: BRIGHT_DATA_PASSWORD
+    if (details.isProxy) {
+      return { 
+        authCredentials: {
+          username: PROXY_USERNAME,
+          password: PROXY_PASSWORD
+        }
       }
-    })
+    }
+    return {}
   },
-  { urls: PROXY_DOMAINS.map(domain => `*://*.${domain}/*`) }
+  { urls: ["<all_urls>"] },
+  ["blocking"]
 )
