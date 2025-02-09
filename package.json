@@ -32,6 +32,6 @@
       "https://*/*",
       "http://*/*"
     ],
-    "permissions": ["proxy", "storage", "webRequest", "webRequestAuthProvider"]
+    "permissions": ["storage"]
   }
 }

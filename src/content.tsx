@@ -1,10 +1,10 @@
 import cssText from "data-text:~style.css"
-import type { PlasmoCSConfig } from "plasmo"
-
-import { CountButton } from "~features/count-button"
+import type { PlasmoCSConfig, PlasmoGetInlineAnchor } from "plasmo"
 
 export const config: PlasmoCSConfig = {
-  matches: ["https://www.plasmo.com/*"]
+  matches: ["https://turo.com/us/en/search*"],
+  
+  all_frames: true
 }
 
 export const getStyle = () => {
@@ -13,12 +13,34 @@ export const getStyle = () => {
   return style
 }
 
-const PlasmoOverlay = () => {
+export const getInlineAnchor: PlasmoGetInlineAnchor = () => {
+  const searchFilterElement = document.querySelector('.searchFilter');
+  const parentElement = searchFilterElement ? searchFilterElement.parentElement : null;
+
+  return {
+    element: parentElement,
+    insertPosition: "afterbegin"
+  };
+};
+
+
+const RaptorExplorerButton = () => {
+  const handleClick = () => {
+    console.log("Raptor Explorer clicked!")
+    // Add your button click logic here
+  }
+
   return (
-    <div className="plasmo-z-50 plasmo-flex plasmo-fixed plasmo-top-32 plasmo-right-8">
-      <CountButton />
-    </div>
+    <button
+      onClick={handleClick}
+      className="plasmo-bg-blue-600 plasmo-text-white plasmo-px-4 plasmo-py-2 plasmo-rounded-md plasmo-font-medium plasmo-text-xs hover:plasmo-bg-blue-700 plasmo-transition-colors">
+      Raptor Explorer
+    </button>
   )
 }
 
-export default PlasmoOverlay
+const PlasmoInject = () => {
+  return <RaptorExplorerButton />
+}
+
+export default PlasmoInject
