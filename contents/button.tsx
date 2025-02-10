@@ -1,16 +1,27 @@
-import React from "react"
+import cssText from "data-text:~style.css"
+import type { PlasmoCSConfig, PlasmoGetInlineAnchor } from "plasmo"
 
-const RaptorExplorerButton = () => {
-  return (
-    <button
-      className="px-4 py-2 rounded-md font-medium text-sm transition-colors bg-blue-600 hover:bg-blue-700 text-white">
-      Raptor Explorer
-    </button>
-  )
+
+export const config: PlasmoCSConfig = {
+  matches: ["https://turo.com/us/en/search*"],
+  all_frames: true
 }
 
-const PlasmoInject = () => {
-  return <RaptorExplorerButton />
+export const getStyle = () => {
+  const style = document.createElement("style")
+  style.textContent = cssText
+  return style
 }
 
-export default PlasmoInject
+export const getInlineAnchor: PlasmoGetInlineAnchor = () => {
+  const searchFilterElement = document.querySelector('.searchFilter')
+  const parentElement = searchFilterElement ? searchFilterElement.parentElement : null
+
+  return {
+    element: parentElement,
+    insertPosition: "afterbegin"
+  }
+}
+
+
+

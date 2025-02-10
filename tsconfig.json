@@ -7,7 +7,7 @@
     ".plasmo/index.d.ts",
     "./**/*.ts",
     "./**/*.tsx"
-  ],
+, "components/RaptorExplorerButton"  ],
   "compilerOptions": {
     "paths": {
       "~*": [
