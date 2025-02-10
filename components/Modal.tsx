@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { Storage } from "@plasmohq/storage"
-import type { RecordingState, Vehicle } from "~types"
 
-const storage = new Storage()
-
-interface VehicleEvent extends CustomEvent {
-  detail: {
-    vehicles: Vehicle[]
-  }
-}
+const storage = new Storage({area: "local"})
 
 interface ModalProps {
   onClose: () => void
@@ -16,38 +9,41 @@ interface ModalProps {
 
 const Modal = ({ onClose }: ModalProps) => {
   const [isRecording, setIsRecording] = useState(false)
-  const [listName, setListName] = useState("")
-  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [vehicles, setVehicles] = useState<any[]>([])
 
   useEffect(() => {
-    const handleVehicles = async (event: VehicleEvent) => {
-      if (isRecording) {
-        const vehiclesData = event.detail.vehicles
-        setVehicles(prev => [...prev, ...vehiclesData])
-      }
-    }
+    // Load initial state
+    storage.get<boolean>("isRecording").then(state => setIsRecording(state ?? false))
+    storage.get<any[]>("recordedVehicles").then(data => setVehicles(data ?? []))
 
-    window.addEventListener('vehicles', handleVehicles as EventListener)
-    return () => {
-      window.removeEventListener('vehicles', handleVehicles as EventListener)
-    }
-  }, [isRecording])
+    // Set up storage listeners
+    storage.watch({
+      isRecording: (change) => {
+        const newValue = change?.newValue
+        setIsRecording(newValue === true)
+      },
+      recordedVehicles: (change) => {
+        const newValue = change?.newValue as any[] | undefined
+        setVehicles(newValue ?? [])
+      }
+    })
+  }, [])
 
   const handleRecordingToggle = async () => {
-    const newRecordingState = !isRecording
-    setIsRecording(newRecordingState)
-    
-    if (!newRecordingState && vehicles.length > 0) {
-      // Save the recorded data when stopping
-      await storage.set("recordedVehicles", vehicles)
-      setVehicles([])
-    }
+    const newState = !isRecording
+    await storage.set("isRecording", newState)
+    setIsRecording(newState)
+  }
+
+  const clearRecordings = async () => {
+    await storage.set("recordedVehicles", [])
+    setVehicles([])
   }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-start">
       <div className="w-[85%] max-w-[85%] bg-white h-[calc(100vh-80px)] mt-[80px] rounded-r-lg shadow-xl 
-        transform transition-transform duration-300 ease-in-out"
+        transform transition-transform duration-300 ease-in-out overflow-auto"
         onClick={(e) => e.stopPropagation()}>
         
         <div className="p-6">
@@ -77,13 +73,37 @@ const Modal = ({ onClose }: ModalProps) => {
                   Recording...
                 </span>
               )}
+              {vehicles.length > 0 && (
+                <button
+                  onClick={clearRecordings}
+                  className="px-4 py-2 rounded-lg font-medium text-white bg-gray-600 hover:bg-gray-700">
+                  Clear All
+                </button>
+              )}
             </div>
 
-            {isRecording && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-600">
-                  Vehicles captured: {vehicles.length}
-                </p>
+            {vehicles.length > 0 && (
+              <div className="mt-6 overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Make</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {vehicles.map((vehicle) => (
+                      <tr key={vehicle.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.id}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.make}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.model}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.year}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
