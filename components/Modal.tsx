@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react"
+
 import { Storage } from "@plasmohq/storage"
 import VehicleTable from "./VehicleTable"
 import type { Vehicle, EnrichmentProgress } from "~types"
@@ -103,13 +104,12 @@ const Modal = ({ onClose }: ModalProps) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-start">
-      <div className="w-[85%] max-w-[85%] bg-white h-[calc(100vh-80px)] mt-[80px] rounded-r-lg shadow-xl 
+      <div className="w-[85%] max-w-[85%] bg-white h-[calc(100vh-80px)] mt-[80px] shadow-xl 
         transform transition-transform duration-300 ease-in-out overflow-auto"
         onClick={(e) => e.stopPropagation()}>
         
         <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">Raptor Explorer</h2>
+          <div className="flex justify-end items-center mb-6">
             <Button
               variant="default"
               size="icon"
@@ -128,18 +128,12 @@ const Modal = ({ onClose }: ModalProps) => {
                 variant={isRecording ? "destructive" : "default"}>
                 {isRecording ? 'Stop Recording' : 'Start Recording'}
               </Button>
-              {isRecording && (
-                <span className="flex items-center">
-                  <span className="w-3 h-3 bg-red-600 rounded-full animate-pulse mr-2"></span>
-                  Recording...
-                </span>
-              )}
               {vehicles.length > 0 && !isRecording && (
                 <>
                   <Button
                     onClick={handleEnrichData}
                     disabled={enrichProgress.isProcessing}
-                    variant="secondary">
+                    variant="default">
                     {enrichProgress.isProcessing 
                       ? `Enriching ${enrichProgress.current}/${enrichProgress.total}` 
                       : 'Enrich Data'}
@@ -156,7 +150,7 @@ const Modal = ({ onClose }: ModalProps) => {
               {vehicles.length > 0 && (
                 <Button
                   onClick={clearRecordings}
-                  variant="outline">
+                  variant="secondary">
                   Clear All
                 </Button>
               )}

@@ -7,12 +7,14 @@ export const config: PlasmoCSConfig = {
   all_frames: true
 }
 
+// Use CSS modules for better style isolation
 export const getStyle = () => {
   const style = document.createElement("style")
-  style.textContent = cssText
+  style.textContent = cssText.replaceAll(':root', ':host(plasmo-csui)');
   return style
 }
 
+// Remove shadow DOM as it might interfere with Tailwind
 export const getInlineAnchor: PlasmoGetInlineAnchor = () => {
   const searchFilterElement = document.querySelector('.searchFilter')
   const parentElement = searchFilterElement ? searchFilterElement.parentElement : null

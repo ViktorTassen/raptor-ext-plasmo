@@ -26,7 +26,7 @@ const RaptorExplorerButton = () => {
   return (
     <>
       <Button
-        variant="outline"
+        variant="default"
         onClick={() => setIsModalOpen(true)}
         size="sm"
         className="flex items-center gap-2">
