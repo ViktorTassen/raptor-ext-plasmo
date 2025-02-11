@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react"
-
+import iconCropped from "data-base64:~assets/turrex-icon-cropped.png"
 import { Storage } from "@plasmohq/storage"
 import VehicleTable from "./VehicleTable"
 import type { Vehicle, EnrichmentProgress } from "~types"
@@ -63,15 +63,16 @@ const Modal = ({ onClose }: ModalProps) => {
   }
 
   const handleEnrichData = async () => {
-    if (isRecording) {
-      alert("Please stop recording before enriching data")
-      return
-    }
-
     const unenrichedVehicles = vehicles.filter(v => !v.isEnriched)
     if (unenrichedVehicles.length === 0) {
       alert("All vehicles are already enriched!")
       return
+    }
+
+    // If recording is active, stop it first
+    if (isRecording) {
+      await storage.set("isRecording", false)
+      setIsRecording(false)
     }
 
     try {
@@ -105,30 +106,29 @@ const Modal = ({ onClose }: ModalProps) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-start">
       <div className="w-[85%] max-w-[85%] bg-white h-[calc(100vh-80px)] mt-[80px] shadow-xl 
-        transform transition-transform duration-300 ease-in-out overflow-auto"
+        transform transition-transform duration-300 ease-in-out overflow-auto relative"
         onClick={(e) => e.stopPropagation()}>
         
         <div className="p-6">
-          <div className="flex justify-end items-center mb-6">
-            <Button
-              variant="default"
-              size="icon"
-              onClick={onClose}
-              className="rounded-full">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </Button>
-          </div>
+          <Button
+            variant="default"
+            size="icon"
+            onClick={onClose}
+            className="rounded-full absolute top-6 right-6">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </Button>
 
-          <div className="space-y-4">
-            <div className="flex items-center space-x-4">
+          <div>
+          <img src={iconCropped} style={{ width: '33px', marginLeft: 10 }} />
+            <div className="flex items-center space-x-4 mb-6">
               <Button
                 onClick={handleRecordingToggle}
                 variant={isRecording ? "destructive" : "default"}>
                 {isRecording ? 'Stop Recording' : 'Start Recording'}
               </Button>
-              {vehicles.length > 0 && !isRecording && (
+              {vehicles.length > 0 && (
                 <>
                   <Button
                     onClick={handleEnrichData}
