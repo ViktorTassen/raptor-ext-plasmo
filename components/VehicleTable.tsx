@@ -19,6 +19,8 @@ import {
 import { Badge } from "~components/ui/badge"
 import { BadgeCell } from "~components/table/BadgeCell"
 import { RevenueCell } from "~components/table/RevenueCell"
+import { InstantBookLocations } from "~components/table/InstantBookLocations"
+import { ColorCircle } from "./table/ColorCircle"
 
 interface VehicleTableProps {
   vehicles: Vehicle[]
@@ -70,6 +72,15 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       cell: (info) => info.getValue() || '-'
     },
     {
+      header: "Color",
+      accessorFn: (row: Vehicle) => row.details?.color,
+      cell: (info) => {
+        const color = info.getValue()
+        if (!color) return null
+        return <ColorCircle color={color} />
+      }
+    },
+    {
       header: "Transmission",
       accessorFn: (row: Vehicle) => row.details?.vehicle?.automaticTransmission,
       cell: (info) => {
@@ -77,7 +88,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         if (isAutomatic === undefined) return null
         return (
           <Badge variant={isAutomatic ? "success" : "default"}>
-            {isAutomatic ? 'Automatic' : 'Manual'}
+            {isAutomatic ? 'Auto' : 'Manual'}
           </Badge>
         )
       }
@@ -95,6 +106,21 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       accessorKey: "completedTrips"
     },
     {
+      header: "Favs",
+      accessorFn: (row: Vehicle) => row.details?.numberOfFavorites
+    },
+    {
+      header: "Instant Book",
+      accessorFn: (row: Vehicle) => row.details?.instantBookLocationPreferences,
+      cell: (info) => {
+        const prefs = info.getValue() as Vehicle["details"]["instantBookLocationPreferences"]
+
+        if (!prefs) return null
+        return <InstantBookLocations preferences={prefs} />
+      }
+    },
+
+    {
       header: "Host",
       accessorFn: (row: Vehicle) => row.details?.owner,
       cell: (info) => {
@@ -110,6 +136,15 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
             <span className="text-sm">{owner.name}</span>
           </div>
         )
+      }
+    },
+    {
+      header: "P Plan",
+      accessorFn: (row: Vehicle) => row.details?.hostTakeRate,
+      cell: (info) => {
+        const rate = info.getValue() as number | undefined
+        if (rate == null) return null
+        return `${(rate * 100).toFixed(0)}%`
       }
     },
     {
@@ -149,19 +184,8 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         />
       }
     },
-    {
-      header: "Color",
-      accessorFn: (row: Vehicle) => row.details?.color
-    },
-    {
-      header: "Host Take Rate",
-      accessorFn: (row: Vehicle) => row.details?.hostTakeRate,
-      cell: (info) => {
-        const rate = info.getValue() as number | undefined
-        if (rate == null) return null
-        return `${(rate * 100).toFixed(1)}%`
-      }
-    },
+   
+
     {
       header: "Extras",
       accessorFn: (row: Vehicle) => row.details?.extras.extras,
@@ -177,57 +201,8 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         />
       }
     },
-    {
-      header: "Instant Book Locations",
-      accessorFn: (row: Vehicle) => row.details?.instantBookLocationPreferences,
-      cell: (info) => {
-        const prefs = info.getValue() as Vehicle["details"]["instantBookLocationPreferences"]
-        if (!prefs) return null
 
-        const locations = [
-          { enabled: prefs.airportLocationEnabled, label: "Airport" },
-          { enabled: prefs.customLocationEnabled, label: "Custom" },
-          { enabled: prefs.homeLocationEnabled, label: "Home" },
-          { enabled: prefs.poiLocationEnabled, label: "POI" }
-        ].filter(loc => loc.enabled)
 
-        return <BadgeCell badges={locations.map((loc, index) => ({
-          id: index,
-          label: loc.label,
-          value: loc.label
-        }))} />
-      }
-    },
-    {
-      header: "Min Age",
-      accessorFn: (row: Vehicle) => row.details?.minimumAgeInYearsToRent,
-      cell: (info) => {
-        const age = info.getValue() as number | undefined
-        if (age == null) return null
-        return `${age} years`
-      }
-    },
-    {
-      header: "Favorites",
-      accessorFn: (row: Vehicle) => row.details?.numberOfFavorites
-    },
-    {
-      header: "Rentals",
-      accessorFn: (row: Vehicle) => row.details?.numberOfRentals
-    },
-    {
-      header: "Reviews",
-      accessorFn: (row: Vehicle) => row.details?.numberOfReviews
-    },
-    {
-      header: "Excess Fee",
-      accessorFn: (row: Vehicle) => row.details?.rate?.excessFeePerDistance,
-      cell: (info) => {
-        const fee = info.getValue() as ExcessFee | undefined
-        if (!fee) return null
-        return `${fee.amount} ${fee.currencyCode}`
-      }
-    },
     {
       header: "Airport Delivery",
       accessorFn: (row: Vehicle) => row.details?.rate?.airportDeliveryLocationsAndFees,
@@ -251,12 +226,12 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       }
     },
     {
-      header: "Monthly Discount",
-      accessorFn: (row: Vehicle) => row.details?.rate?.monthlyDiscountPercentage,
+      header: "Weekly Distance",
+      accessorFn: (row: Vehicle) => row.details?.rate?.weeklyDistance,
       cell: (info) => {
-        const discount = info.getValue() as number | undefined
-        if (discount == null) return null
-        return `${discount}%`
+        const distance = info.getValue() as Distance | undefined
+        if (!distance) return null
+        return `${distance.scalar} ${distance.unit}`
       }
     },
     {
@@ -269,14 +244,15 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       }
     },
     {
-      header: "Monthly Mileage",
-      accessorFn: (row: Vehicle) => row.details?.rate?.monthlyMileage,
+      header: "Excess Fee",
+      accessorFn: (row: Vehicle) => row.details?.rate?.excessFeePerDistance,
       cell: (info) => {
-        const mileage = info.getValue() as number | undefined
-        if (mileage == null) return null
-        return mileage.toLocaleString()
+        const fee = info.getValue() as ExcessFee | undefined
+        if (!fee) return null
+        return `${fee.amount} ${fee.currencyCode}`
       }
     },
+
     {
       header: "Weekly Discount",
       accessorFn: (row: Vehicle) => row.details?.rate?.weeklyDiscountPercentage,
@@ -286,15 +262,22 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         return `${discount}%`
       }
     },
+
     {
-      header: "Weekly Distance",
-      accessorFn: (row: Vehicle) => row.details?.rate?.weeklyDistance,
+      header: "Monthly Discount",
+      accessorFn: (row: Vehicle) => row.details?.rate?.monthlyDiscountPercentage,
       cell: (info) => {
-        const distance = info.getValue() as Distance | undefined
-        if (!distance) return null
-        return `${distance.scalar} ${distance.unit}`
+        const discount = info.getValue() as number | undefined
+        if (discount == null) return null
+        return `${discount}%`
       }
     },
+
+    {
+      header: "Reviews",
+      accessorFn: (row: Vehicle) => row.details?.numberOfReviews
+    },
+
     {
       header: "Rating",
       accessorKey: "rating",
@@ -303,7 +286,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         if (rating == null) return null
         return (
           <div className="flex items-center">
-            <span className="mr-1">{rating.toFixed(2)}</span>
+            <span className="mr-1">{rating.toFixed(1)}</span>
             <span className="text-yellow-400">★</span>
           </div>
         )
