@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react"
 import { Storage } from "@plasmohq/storage"
+import { Disc2 } from "lucide-react"
 import Modal from "./Modal"
+import { Button } from "./ui/button"
 
 const storage = new Storage({area:"local"})
 
@@ -23,16 +25,16 @@ const RaptorExplorerButton = () => {
 
   return (
     <>
-      <button
+      <Button
+        variant="outline"
         onClick={() => setIsModalOpen(true)}
-        className="px-4 py-2 rounded-md font-medium text-xs transition-colors bg-blue-600 hover:bg-blue-700 text-white flex items-center space-x-2">
+        size="sm"
+        className="flex items-center gap-2">
         <span>Raptor Explorer</span>
         {isRecording && (
-          <span className="flex items-center">
-            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse ml-2"></span>
-          </span>
+          <Disc2 className="h-4 w-4 text-red-500 animate-pulse" />
         )}
-      </button>
+      </Button>
       {isModalOpen && <Modal onClose={() => setIsModalOpen(false)} />}
     </>
   )

@@ -3,6 +3,7 @@ import { Storage } from "@plasmohq/storage"
 import VehicleTable from "./VehicleTable"
 import type { Vehicle, EnrichmentProgress } from "~types"
 import { enrichVehicles } from "~utils/enrichment"
+import { Button } from "./ui/button"
 
 const storage = new Storage({area: "local"})
 
@@ -109,24 +110,24 @@ const Modal = ({ onClose }: ModalProps) => {
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">Raptor Explorer</h2>
-            <button
+            <Button
+              variant="default"
+              size="icon"
               onClick={onClose}
-              className="p-2 hover:bg-gray-100 rounded-full">
+              className="rounded-full">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
-            </button>
+            </Button>
           </div>
 
           <div className="space-y-4">
             <div className="flex items-center space-x-4">
-              <button
+              <Button
                 onClick={handleRecordingToggle}
-                className={`px-6 py-3 rounded-lg font-medium text-white transition-colors ${
-                  isRecording ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'
-                }`}>
+                variant={isRecording ? "destructive" : "default"}>
                 {isRecording ? 'Stop Recording' : 'Start Recording'}
-              </button>
+              </Button>
               {isRecording && (
                 <span className="flex items-center">
                   <span className="w-3 h-3 bg-red-600 rounded-full animate-pulse mr-2"></span>
@@ -135,32 +136,29 @@ const Modal = ({ onClose }: ModalProps) => {
               )}
               {vehicles.length > 0 && !isRecording && (
                 <>
-                  <button
+                  <Button
                     onClick={handleEnrichData}
                     disabled={enrichProgress.isProcessing}
-                    className={`px-6 py-3 rounded-lg font-medium text-white transition-colors
-                      ${enrichProgress.isProcessing 
-                        ? 'bg-blue-400 cursor-not-allowed' 
-                        : 'bg-blue-600 hover:bg-blue-700'}`}>
+                    variant="secondary">
                     {enrichProgress.isProcessing 
                       ? `Enriching ${enrichProgress.current}/${enrichProgress.total}` 
                       : 'Enrich Data'}
-                  </button>
+                  </Button>
                   {enrichProgress.isProcessing && (
-                    <button
+                    <Button
                       onClick={stopEnrichment}
-                      className="px-6 py-3 rounded-lg font-medium text-white transition-colors bg-red-600 hover:bg-red-700">
+                      variant="destructive">
                       Stop Enriching
-                    </button>
+                    </Button>
                   )}
                 </>
               )}
               {vehicles.length > 0 && (
-                <button
+                <Button
                   onClick={clearRecordings}
-                  className="px-4 py-2 rounded-lg font-medium text-white bg-gray-600 hover:bg-gray-700">
+                  variant="outline">
                   Clear All
-                </button>
+                </Button>
               )}
             </div>
 
