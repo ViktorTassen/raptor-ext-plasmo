@@ -1,4 +1,12 @@
-import { Card, AreaChart } from "@tremor/react"
+import React from "react"
+import {
+  Bar,
+  BarChart,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip
+} from "recharts"
 import type { DailyPricing } from "~types"
 
 interface RevenueCellProps {
@@ -45,38 +53,71 @@ export function RevenueCell({ dailyPricing }: RevenueCellProps) {
     })
 
     return Object.entries(months)
-      .map(([month, revenue]) => ({
-        month: month.substring(5, 7) + '/' + month.substring(2, 4),
-        revenue: Math.round(revenue)
-      }))
+      .map(([month, revenue]) => {
+        const date = new Date(month)
+        return {
+          name: date.toLocaleString('en-US', { month: 'short' }),
+          fullMonth: date.toLocaleString('en-US', { month: 'long' }),
+          year: date.getFullYear(),
+          total: Math.round(revenue)
+        }
+      })
       .reverse()
   }
 
   const data = calculateMonthlyRevenue(dailyPricing)
-  const filteredData = data.filter(month => month.revenue !== 0)
-  const totalRevenueFiltered = filteredData.reduce((sum, month) => sum + month.revenue, 0)
+  const filteredData = data.filter(month => month.total !== 0)
+  const totalRevenueFiltered = filteredData.reduce((sum, month) => sum + month.total, 0)
   const avgMonthlyRevenueFiltered = filteredData.length > 0 
     ? Math.round(totalRevenueFiltered / filteredData.length) 
     : 0
 
   return (
     <div className="w-[200px]">
-      <div className="text-sm font-medium mb-1">
+      {/* <div className="text-sm font-medium mb-1">
         Avg: ${avgMonthlyRevenueFiltered.toLocaleString()}
+      </div> */}
+      <div className="h-10">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+            <XAxis
+            interval={"preserveStartEnd"}
+              dataKey="name"
+              fontSize={9}
+              tickLine={false}
+              axisLine={true}
+              height={16}
+            />
+            <Tooltip
+              cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  const data = payload[0].payload
+                  return (
+                    <div className="rounded-lg border bg-white p-2 shadow-sm">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[0.70rem] text-muted-foreground">
+                          {data.fullMonth} {data.year}
+                        </span>
+                        <span className="font-bold text-muted-foreground">
+                          ${payload[0].value?.toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                }
+                return null
+              }}
+            />
+            <Bar
+              dataKey="total"
+              fill="currentColor"
+              radius={[2, 2, 0, 0]}
+              className="fill-primary"
+            />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
-      <Card className="h-24">
-        <AreaChart
-          data={data}
-          index="month"
-          categories={["revenue"]}
-          colors={["blue"]}
-          valueFormatter={(value) => `$${value.toLocaleString()}`}
-          showXAxis={true}
-          showYAxis={true}
-          showLegend={false}
-          showGridLines={false}
-        />
-      </Card>
     </div>
   )
 }

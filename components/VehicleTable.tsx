@@ -7,7 +7,7 @@ import {
   type ColumnDef,
   flexRender
 } from "@tanstack/react-table"
-import type { Vehicle, VehicleOwner, Distance, ExcessFee, AirportDeliveryLocation } from "~types"
+import type { Vehicle, VehicleOwner, Distance, ExcessFee, AirportDeliveryLocation, DailyPricing } from "~types"
 import {
   Table,
   TableBody,
@@ -35,11 +35,19 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         <img
           src={info.getValue() as string}
           alt="Vehicle"
-          className="h-12 w-16 object-cover rounded"
+          className="h-8 w-20 object-cover rounded"
         />
       ),
       enableSorting: false
     },
+    {
+        header: "Est. Monthly Revenue",
+        accessorFn: (row: Vehicle) => row.dailyPricing || [],
+        cell: (info) => {
+          const dailyPricing = info.getValue() as DailyPricing[]
+          return <RevenueCell dailyPricing={dailyPricing} />
+        }
+      },
     {
       header: "Type",
       accessorKey: "type"
@@ -411,14 +419,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         )
       }
     },
-    {
-      header: "Est. Monthly Revenue",
-      accessorFn: (row: Vehicle) => row.dailyPricing,
-      cell: (info) => {
-        const dailyPricing = info.getValue()
-        return <RevenueCell dailyPricing={dailyPricing} />
-      }
-    }
+   
   ]
 
   const table = useReactTable({
