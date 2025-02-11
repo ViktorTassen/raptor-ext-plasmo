@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { Storage } from "@plasmohq/storage"
+import VehicleTable from "./VehicleTable"
+import type { Vehicle, EnrichmentProgress } from "~types"
+import { enrichVehicles } from "~utils/enrichment"
 
 const storage = new Storage({area: "local"})
 
@@ -9,12 +12,18 @@ interface ModalProps {
 
 const Modal = ({ onClose }: ModalProps) => {
   const [isRecording, setIsRecording] = useState(false)
-  const [vehicles, setVehicles] = useState<any[]>([])
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [enrichProgress, setEnrichProgress] = useState<EnrichmentProgress>({
+    current: 0,
+    total: 0,
+    isProcessing: false
+  })
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     // Load initial state
     storage.get<boolean>("isRecording").then(state => setIsRecording(state ?? false))
-    storage.get<any[]>("recordedVehicles").then(data => setVehicles(data ?? []))
+    storage.get<Vehicle[]>("recordedVehicles").then(data => setVehicles(data ?? []))
 
     // Set up storage listeners
     storage.watch({
@@ -23,7 +32,7 @@ const Modal = ({ onClose }: ModalProps) => {
         setIsRecording(newValue === true)
       },
       recordedVehicles: (change) => {
-        const newValue = change?.newValue as any[] | undefined
+        const newValue = change?.newValue as Vehicle[] | undefined
         setVehicles(newValue ?? [])
       }
     })
@@ -38,6 +47,57 @@ const Modal = ({ onClose }: ModalProps) => {
   const clearRecordings = async () => {
     await storage.set("recordedVehicles", [])
     setVehicles([])
+  }
+
+  const stopEnrichment = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+      setEnrichProgress(prev => ({
+        ...prev,
+        isProcessing: false
+      }))
+    }
+  }
+
+  const handleEnrichData = async () => {
+    if (isRecording) {
+      alert("Please stop recording before enriching data")
+      return
+    }
+
+    const unenrichedVehicles = vehicles.filter(v => !v.isEnriched)
+    if (unenrichedVehicles.length === 0) {
+      alert("All vehicles are already enriched!")
+      return
+    }
+
+    try {
+      // Create new AbortController for this enrichment session
+      abortControllerRef.current = new AbortController()
+
+      const enrichedVehicles = await enrichVehicles(
+        unenrichedVehicles, 
+        (progress) => {
+          setEnrichProgress(progress)
+        },
+        abortControllerRef.current.signal
+      )
+
+      // Combine enriched vehicles with already enriched ones
+      const updatedVehicles = [
+        ...vehicles.filter(v => v.isEnriched),
+        ...enrichedVehicles
+      ]
+
+      await storage.set("recordedVehicles", updatedVehicles)
+      setVehicles(updatedVehicles)
+    } catch (error) {
+      console.error("Error enriching vehicles:", error)
+      alert("Error enriching vehicles. Please try again.")
+    } finally {
+      abortControllerRef.current = null
+    }
   }
 
   return (
@@ -73,6 +133,28 @@ const Modal = ({ onClose }: ModalProps) => {
                   Recording...
                 </span>
               )}
+              {vehicles.length > 0 && !isRecording && (
+                <>
+                  <button
+                    onClick={handleEnrichData}
+                    disabled={enrichProgress.isProcessing}
+                    className={`px-6 py-3 rounded-lg font-medium text-white transition-colors
+                      ${enrichProgress.isProcessing 
+                        ? 'bg-blue-400 cursor-not-allowed' 
+                        : 'bg-blue-600 hover:bg-blue-700'}`}>
+                    {enrichProgress.isProcessing 
+                      ? `Enriching ${enrichProgress.current}/${enrichProgress.total}` 
+                      : 'Enrich Data'}
+                  </button>
+                  {enrichProgress.isProcessing && (
+                    <button
+                      onClick={stopEnrichment}
+                      className="px-6 py-3 rounded-lg font-medium text-white transition-colors bg-red-600 hover:bg-red-700">
+                      Stop Enriching
+                    </button>
+                  )}
+                </>
+              )}
               {vehicles.length > 0 && (
                 <button
                   onClick={clearRecordings}
@@ -83,28 +165,7 @@ const Modal = ({ onClose }: ModalProps) => {
             </div>
 
             {vehicles.length > 0 && (
-              <div className="mt-6 overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Make</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Model</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {vehicles.map((vehicle) => (
-                      <tr key={vehicle.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{vehicle.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.make}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.model}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{vehicle.year}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <VehicleTable vehicles={vehicles} />
             )}
           </div>
         </div>

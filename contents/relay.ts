@@ -1,5 +1,6 @@
 import { sendToBackground } from "@plasmohq/messaging"
 import type { PlasmoCSConfig } from "plasmo"
+import type { Vehicle } from "~types"
  
 export const config: PlasmoCSConfig = {
     matches: ["https://turo.com/*"]
@@ -7,18 +8,43 @@ export const config: PlasmoCSConfig = {
 
 window.addEventListener('vehicles', async (event: CustomEvent) => {
     console.log('[Raptor] Vehicles event received')
-    const vehiclesData = event.detail.vehicles
+    const rawVehicles = event.detail.vehicles
 
-    if (!Array.isArray(vehiclesData)) {
+    if (!Array.isArray(rawVehicles)) {
       console.error('[Raptor] Invalid vehicles data received')
       return
     }
+
+    // Transform the data to keep only required fields
+    const vehicles: Vehicle[] = rawVehicles.map(v => ({
+      id: v.id,
+      avgDailyPrice: v.avgDailyPrice,
+      completedTrips: v.completedTrips,
+      hostId: v.hostId,
+      images: v.images.map(img => ({
+        originalImageUrl: img.originalImageUrl
+      })),
+      isAllStarHost: v.isAllStarHost,
+      isNewListing: v.isNewListing,
+      location: {
+        city: v.location.city,
+        country: v.location.country,
+        state: v.location.state,
+        homeLocation: v.location.homeLocation
+      },
+      make: v.make,
+      model: v.model,
+      rating: v.rating,
+      tags: v.tags,
+      type: v.type,
+      year: v.year
+    }))
 
     try {
         const response = await sendToBackground({
           name: "vehiclesCache",
           body: {
-            vehicles: vehiclesData
+            vehicles
           }
         })
       

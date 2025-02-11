@@ -11,6 +11,7 @@ window.fetch = async function (...args) {
   try {
     const request = args[0]
     const url = request instanceof Request ? request.url : request instanceof URL ? request.href : request
+
     const response = await originalFetch(...args)
     
     if ((response && url?.includes('api/v2/search')) || (response && url?.includes('api/search?country'))) {
