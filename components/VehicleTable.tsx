@@ -21,6 +21,7 @@ import { BadgeCell } from "~components/table/BadgeCell"
 import { RevenueCell } from "~components/table/RevenueCell"
 import { InstantBookLocations } from "~components/table/InstantBookLocations"
 import { ColorCircle } from "./table/ColorCircle"
+import { calculateAverageMonthlyRevenue, calculatePreviousYearRevenue } from "~utils/revenue"
 
 interface VehicleTableProps {
   vehicles: Vehicle[]
@@ -43,13 +44,35 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       enableSorting: false
     },
     {
-        header: "Est. Monthly Revenue",
-        accessorFn: (row: Vehicle) => row.dailyPricing || [],
-        cell: (info) => {
-          const dailyPricing = info.getValue() as DailyPricing[]
-          return <RevenueCell dailyPricing={dailyPricing} />
-        }
+      header: "Avg Monthly Revenue",
+      accessorFn: (row: Vehicle) => {
+        if (!row.dailyPricing) return 0
+        return calculateAverageMonthlyRevenue(row.dailyPricing)
       },
+      cell: (info) => {
+        const value = info.getValue() as number
+        return `$${value.toLocaleString()}`
+      }
+    },
+    {
+      header: "Previous Year Revenue",
+      accessorFn: (row: Vehicle) => {
+        if (!row.dailyPricing) return 0
+        return calculatePreviousYearRevenue(row.dailyPricing)
+      },
+      cell: (info) => {
+        const value = info.getValue() as number
+        return `$${value.toLocaleString()}`
+      }
+    },
+    {
+      header: "Est. Monthly Revenue",
+      accessorFn: (row: Vehicle) => row.dailyPricing || [],
+      cell: (info) => {
+        const dailyPricing = info.getValue() as DailyPricing[]
+        return <RevenueCell dailyPricing={dailyPricing} />
+      }
+    },
     {
       header: "Type",
       accessorKey: "type"
@@ -114,12 +137,10 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       accessorFn: (row: Vehicle) => row.details?.instantBookLocationPreferences,
       cell: (info) => {
         const prefs = info.getValue() as Vehicle["details"]["instantBookLocationPreferences"]
-
         if (!prefs) return null
         return <InstantBookLocations preferences={prefs} />
       }
     },
-
     {
       header: "Host",
       accessorFn: (row: Vehicle) => row.details?.owner,
@@ -184,8 +205,6 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         />
       }
     },
-   
-
     {
       header: "Extras",
       accessorFn: (row: Vehicle) => row.details?.extras.extras,
@@ -201,8 +220,6 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         />
       }
     },
-
-
     {
       header: "Airport Delivery",
       accessorFn: (row: Vehicle) => row.details?.rate?.airportDeliveryLocationsAndFees,
@@ -252,7 +269,6 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         return `${fee.amount} ${fee.currencyCode}`
       }
     },
-
     {
       header: "Weekly Discount",
       accessorFn: (row: Vehicle) => row.details?.rate?.weeklyDiscountPercentage,
@@ -262,7 +278,6 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         return `${discount}%`
       }
     },
-
     {
       header: "Monthly Discount",
       accessorFn: (row: Vehicle) => row.details?.rate?.monthlyDiscountPercentage,
@@ -272,12 +287,10 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         return `${discount}%`
       }
     },
-
     {
       header: "Reviews",
       accessorFn: (row: Vehicle) => row.details?.numberOfReviews
     },
-
     {
       header: "Rating",
       accessorKey: "rating",
@@ -401,8 +414,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
           </a>
         )
       }
-    },
-   
+    }
   ]
 
   const table = useReactTable({
