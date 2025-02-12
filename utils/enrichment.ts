@@ -45,6 +45,27 @@ const getDefaultDates = () => {
   }
 }
 
+async function fetchMarketValue(vehicle: Vehicle, trim?: string) {
+  try {
+    // Construct the vehicle identifier
+    const id = [
+      vehicle.year,
+      vehicle.make.toLowerCase().replace(/\s/g, '_'), // Replace spaces with underscores in make
+      vehicle.model.toLowerCase().replace(/\s/g, '_').replace(/-/g, ''), // Replace spaces with underscores and remove hyphens from model
+      (trim || '').toLowerCase().replace(/\s/g, '_').replace(/-/g, '') // Replace spaces with underscores and remove hyphens from trim
+    ].filter(Boolean).join('_')
+
+    const url = `https://marketvalues.vinaudit.com/getmarketvalue.php?key=1HB7ICF9L0GVH5Q&id=${id}`
+    const response = await fetch(url)
+    const data = await response.json()
+    console.log('[Raptor] Market value data for', id, ':', data)
+    return data
+  } catch (error) {
+    console.error('[Raptor] Error fetching market value:', error)
+    return null
+  }
+}
+
 async function fetchVehicleDetails(vehicleId: number) {
   const searchParams = await storage.get<{
     startDate: string
@@ -70,6 +91,18 @@ async function fetchVehicleDetails(vehicleId: number) {
     }
     const data = await response.json()
 
+        // Process distance data with unlimited handling
+        const processDistance = (distance: any) => {
+          if (distance?.unlimited) {
+            return {
+              scalar: distance.type === 'DAILY' ? 999 : 9999,
+              unit: distance.unit || 'MI'
+            }
+          }
+          return distance
+        }
+
+
     // Extract only the fields we want to keep
     return {
       badges: data.badges,
@@ -90,13 +123,13 @@ async function fetchVehicleDetails(vehicleId: number) {
       instantBookLocationPreferences: data.instantBookLocationPreferences,
       rate: {
         airportDeliveryLocationsAndFees: data.rate?.airportDeliveryLocationsAndFees,
-        dailyDistance: data.rate?.dailyDistance,
+        dailyDistance: processDistance({ ...data.rate?.dailyDistance, type: 'DAILY' }),
         excessFeePerDistance: data.rate?.excessFeePerDistance,
         monthlyDiscountPercentage: data.rate?.monthlyDiscountPercentage,
-        monthlyDistance: data.rate?.monthlyDistance,
+        monthlyDistance: processDistance({ ...data.rate?.monthlyDistance, type: 'MONTHLY' }),
         monthlyMileage: data.rate?.monthlyMileage,
         weeklyDiscountPercentage: data.rate?.weeklyDiscountPercentage,
-        weeklyDistance: data.rate?.weeklyDistance
+        weeklyDistance: processDistance({ ...data.rate?.weeklyDistance, type: 'WEEKLY' })
       },
       ratings: data.ratings,
       tripCount: data.tripCount,
@@ -175,6 +208,11 @@ export async function enrichVehicles(
       const vehicle = vehicles[i]
       const details = await fetchVehicleDetails(vehicle.id)
       const dailyPricing = await fetchVehicleDailyPricing(vehicle.id)
+      
+      // Fetch market value after getting vehicle details
+      if (details) {
+        await fetchMarketValue(vehicle, details.vehicle.trim)
+      }
       
       // Only add vehicle if both details and pricing were fetched successfully
       if (details && dailyPricing) {
