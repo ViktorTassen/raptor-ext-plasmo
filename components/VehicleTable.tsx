@@ -22,6 +22,7 @@ import { RevenueCell } from "~components/table/RevenueCell"
 import { InstantBookLocations } from "~components/table/InstantBookLocations"
 import { ColorCircle } from "./table/ColorCircle"
 import { calculateAverageMonthlyRevenue, calculatePreviousYearRevenue } from "~utils/revenue"
+import { getCurrencySymbol } from "~utils/currency"
 
 interface VehicleTableProps {
   vehicles: Vehicle[]
@@ -44,36 +45,6 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       enableSorting: false
     },
     {
-      header: "Avg Monthly Revenue",
-      accessorFn: (row: Vehicle) => {
-        if (!row.dailyPricing) return 0
-        return calculateAverageMonthlyRevenue(row.dailyPricing)
-      },
-      cell: (info) => {
-        const value = info.getValue() as number
-        return `$${value.toLocaleString()}`
-      }
-    },
-    {
-      header: "Previous Year Revenue",
-      accessorFn: (row: Vehicle) => {
-        if (!row.dailyPricing) return 0
-        return calculatePreviousYearRevenue(row.dailyPricing)
-      },
-      cell: (info) => {
-        const value = info.getValue() as number
-        return `$${value.toLocaleString()}`
-      }
-    },
-    {
-      header: "Est. Monthly Revenue",
-      accessorFn: (row: Vehicle) => row.dailyPricing || [],
-      cell: (info) => {
-        const dailyPricing = info.getValue() as DailyPricing[]
-        return <RevenueCell dailyPricing={dailyPricing} />
-      }
-    },
-    {
       header: "Type",
       accessorKey: "type"
     },
@@ -86,13 +57,13 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       accessorKey: "model"
     },
     {
-      header: "Year",
-      accessorKey: "year"
-    },
-    {
       header: "Trim",
       accessorFn: (row: Vehicle) => row.details?.vehicle?.trim,
       cell: (info) => info.getValue() || '-'
+    },
+    {
+      header: "Year",
+      accessorKey: "year"
     },
     {
       header: "Color",
@@ -104,25 +75,49 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       }
     },
     {
-      header: "Transmission",
-      accessorFn: (row: Vehicle) => row.details?.vehicle?.automaticTransmission,
+      header: "Est. Monthly Revenue",
+      accessorFn: (row: Vehicle) => row.dailyPricing || [],
       cell: (info) => {
-        const isAutomatic = info.getValue() as boolean | undefined
-        if (isAutomatic === undefined) return null
-        return (
-          <Badge variant={isAutomatic ? "success" : "default"}>
-            {isAutomatic ? 'Auto' : 'Manual'}
-          </Badge>
-        )
+        const dailyPricing = info.getValue() as DailyPricing[]
+        return <RevenueCell dailyPricing={dailyPricing} />
       }
     },
     {
-      header: "City",
-      accessorFn: (row: Vehicle) => row.location.city
+      header: "Avg Monthly",
+      accessorFn: (row: Vehicle) => ({
+        amount: !row.dailyPricing ? 0 : calculateAverageMonthlyRevenue(row.dailyPricing),
+        currency: row.avgDailyPrice?.currency || 'USD'
+      }),
+      cell: (info) => {
+        const { amount, currency } = info.getValue() as { amount: number, currency: string }
+        return `${getCurrencySymbol(currency)}${amount.toLocaleString()}`
+      }
     },
     {
-      header: "State",
-      accessorFn: (row: Vehicle) => row.location.state
+      header: "Prev Year",
+      accessorFn: (row: Vehicle) => ({
+        amount: !row.dailyPricing ? 0 : calculatePreviousYearRevenue(row.dailyPricing),
+        currency: row.avgDailyPrice?.currency || 'USD'
+      }),
+      cell: (info) => {
+        const { amount, currency } = info.getValue() as { amount: number, currency: string }
+        return `${getCurrencySymbol(currency)}${amount.toLocaleString()}`
+      }
+    },
+    {
+      header: "Days on Turo",
+      accessorFn: (row: Vehicle) => {
+        const listingDate = row.details?.vehicle?.listingCreatedTime
+        if (!listingDate) return 0
+        const created = new Date(listingDate)
+        const today = new Date()
+        const diffTime = Math.abs(today.getTime() - created.getTime())
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      },
+      cell: (info) => {
+        const days = info.getValue() as number
+        return days
+      }
     },
     {
       header: "Trips",
@@ -132,6 +127,26 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       header: "Favs",
       accessorFn: (row: Vehicle) => row.details?.numberOfFavorites
     },
+
+    {
+      header: "Rating",
+      accessorKey: "rating",
+      cell: (info) => {
+        const rating = info.getValue() as number
+        if (rating == null) return null
+        return (
+          <div className="flex items-center">
+            <span className="mr-1">{rating.toFixed(1)}</span>
+            <span className="text-yellow-400">★</span>
+          </div>
+        )
+      }
+    },
+    {
+      header: "Reviews",
+      accessorFn: (row: Vehicle) => row.details?.numberOfReviews
+    },
+
     {
       header: "Instant Book",
       accessorFn: (row: Vehicle) => row.details?.instantBookLocationPreferences,
@@ -191,6 +206,40 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       }
     },
     {
+      header: "Airport Delivery",
+      accessorFn: (row: Vehicle) => row.details?.rate?.airportDeliveryLocationsAndFees,
+      cell: (info) => {
+        const locations = info.getValue() as AirportDeliveryLocation[] | undefined
+        if (!locations?.length) return null
+        return <BadgeCell badges={locations.map((loc, index) => ({
+          id: index,
+          label: `${loc.location.code}: ${getCurrencySymbol(loc.feeWithCurrency.currencyCode)}${loc.feeWithCurrency.amount}`,
+          value: loc.location.code
+        }))} />
+      }
+    },
+    {
+      header: "City",
+      accessorFn: (row: Vehicle) => row.location.city
+    },
+    {
+      header: "State",
+      accessorFn: (row: Vehicle) => row.location.state
+    },
+    {
+      header: "Transmission",
+      accessorFn: (row: Vehicle) => row.details?.vehicle?.automaticTransmission,
+      cell: (info) => {
+        const isAutomatic = info.getValue() as boolean | undefined
+        if (isAutomatic === undefined) return null
+        return (
+          <Badge variant={isAutomatic ? "success" : "default"}>
+            {isAutomatic ? 'Auto' : 'Manual'}
+          </Badge>
+        )
+      }
+    },
+    {
       header: "Badges",
       accessorFn: (row: Vehicle) => row.details?.badges,
       cell: (info) => {
@@ -221,25 +270,12 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       }
     },
     {
-      header: "Airport Delivery",
-      accessorFn: (row: Vehicle) => row.details?.rate?.airportDeliveryLocationsAndFees,
-      cell: (info) => {
-        const locations = info.getValue() as AirportDeliveryLocation[] | undefined
-        if (!locations?.length) return null
-        return <BadgeCell badges={locations.map((loc, index) => ({
-          id: index,
-          label: `${loc.location.code}: ${loc.feeWithCurrency.amount} ${loc.feeWithCurrency.currencyCode}`,
-          value: loc.location.code
-        }))} />
-      }
-    },
-    {
       header: "Daily Distance",
       accessorFn: (row: Vehicle) => row.details?.rate?.dailyDistance,
       cell: (info) => {
         const distance = info.getValue() as Distance | undefined
         if (!distance) return null
-        return `${distance.scalar} ${distance.unit}`
+        return `${distance.scalar} ${distance.unit.toLowerCase()}`
       }
     },
     {
@@ -248,7 +284,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       cell: (info) => {
         const distance = info.getValue() as Distance | undefined
         if (!distance) return null
-        return `${distance.scalar} ${distance.unit}`
+        return `${distance.scalar} ${distance.unit.toLowerCase()}`
       }
     },
     {
@@ -257,7 +293,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       cell: (info) => {
         const distance = info.getValue() as Distance | undefined
         if (!distance) return null
-        return `${distance.scalar} ${distance.unit}`
+        return `${distance.scalar} ${distance.unit.toLowerCase()}`
       }
     },
     {
@@ -266,7 +302,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       cell: (info) => {
         const fee = info.getValue() as ExcessFee | undefined
         if (!fee) return null
-        return `${fee.amount} ${fee.currencyCode}`
+        return `${getCurrencySymbol(fee.currencyCode)}${fee.amount}`
       }
     },
     {
@@ -287,99 +323,82 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         return `${discount}%`
       }
     },
-    {
-      header: "Reviews",
-      accessorFn: (row: Vehicle) => row.details?.numberOfReviews
-    },
-    {
-      header: "Rating",
-      accessorKey: "rating",
-      cell: (info) => {
-        const rating = info.getValue() as number
-        if (rating == null) return null
-        return (
-          <div className="flex items-center">
-            <span className="mr-1">{rating.toFixed(1)}</span>
-            <span className="text-yellow-400">★</span>
-          </div>
-        )
-      }
-    },
-    {
-      header: "Cleanliness",
-      accessorFn: (row: Vehicle) =>
-        row.details?.ratings?.histogram.buckets.find(b => b.category === 'CLEANLINESS')?.averageRating,
-      cell: (info) => {
-        const rating = info.getValue() as number | undefined
-        if (rating == null) return null
-        return (
-          <div className="flex items-center">
-            <span className="mr-1">{rating.toFixed(1)}</span>
-            <span className="text-yellow-400">★</span>
-          </div>
-        )
-      }
-    },
-    {
-      header: "Maintenance",
-      accessorFn: (row: Vehicle) =>
-        row.details?.ratings?.histogram.buckets.find(b => b.category === 'MAINTENANCE')?.averageRating,
-      cell: (info) => {
-        const rating = info.getValue() as number | undefined
-        if (rating == null) return null
-        return (
-          <div className="flex items-center">
-            <span className="mr-1">{rating.toFixed(1)}</span>
-            <span className="text-yellow-400">★</span>
-          </div>
-        )
-      }
-    },
-    {
-      header: "Communication",
-      accessorFn: (row: Vehicle) =>
-        row.details?.ratings?.histogram.buckets.find(b => b.category === 'COMMUNICATION')?.averageRating,
-      cell: (info) => {
-        const rating = info.getValue() as number | undefined
-        if (rating == null) return null
-        return (
-          <div className="flex items-center">
-            <span className="mr-1">{rating.toFixed(1)}</span>
-            <span className="text-yellow-400">★</span>
-          </div>
-        )
-      }
-    },
-    {
-      header: "Convenience",
-      accessorFn: (row: Vehicle) =>
-        row.details?.ratings?.histogram.buckets.find(b => b.category === 'CONVENIENCE')?.averageRating,
-      cell: (info) => {
-        const rating = info.getValue() as number | undefined
-        if (rating == null) return null
-        return (
-          <div className="flex items-center">
-            <span className="mr-1">{rating.toFixed(1)}</span>
-            <span className="text-yellow-400">★</span>
-          </div>
-        )
-      }
-    },
-    {
-      header: "Accuracy",
-      accessorFn: (row: Vehicle) =>
-        row.details?.ratings?.histogram.buckets.find(b => b.category === 'LISTING_ACCURACY')?.averageRating,
-      cell: (info) => {
-        const rating = info.getValue() as number | undefined
-        if (rating == null) return null
-        return (
-          <div className="flex items-center">
-            <span className="mr-1">{rating.toFixed(1)}</span>
-            <span className="text-yellow-400">★</span>
-          </div>
-        )
-      }
-    },
+   
+    // {
+    //   header: "Cleanliness",
+    //   accessorFn: (row: Vehicle) =>
+    //     row.details?.ratings?.histogram.buckets.find(b => b.category === 'CLEANLINESS')?.averageRating,
+    //   cell: (info) => {
+    //     const rating = info.getValue() as number | undefined
+    //     if (rating == null) return null
+    //     return (
+    //       <div className="flex items-center">
+    //         <span className="mr-1">{rating.toFixed(1)}</span>
+    //         <span className="text-yellow-400">★</span>
+    //       </div>
+    //     )
+    //   }
+    // },
+    // {
+    //   header: "Maintenance",
+    //   accessorFn: (row: Vehicle) =>
+    //     row.details?.ratings?.histogram.buckets.find(b => b.category === 'MAINTENANCE')?.averageRating,
+    //   cell: (info) => {
+    //     const rating = info.getValue() as number | undefined
+    //     if (rating == null) return null
+    //     return (
+    //       <div className="flex items-center">
+    //         <span className="mr-1">{rating.toFixed(1)}</span>
+    //         <span className="text-yellow-400">★</span>
+    //       </div>
+    //     )
+    //   }
+    // },
+    // {
+    //   header: "Communication",
+    //   accessorFn: (row: Vehicle) =>
+    //     row.details?.ratings?.histogram.buckets.find(b => b.category === 'COMMUNICATION')?.averageRating,
+    //   cell: (info) => {
+    //     const rating = info.getValue() as number | undefined
+    //     if (rating == null) return null
+    //     return (
+    //       <div className="flex items-center">
+    //         <span className="mr-1">{rating.toFixed(1)}</span>
+    //         <span className="text-yellow-400">★</span>
+    //       </div>
+    //     )
+    //   }
+    // },
+    // {
+    //   header: "Convenience",
+    //   accessorFn: (row: Vehicle) =>
+    //     row.details?.ratings?.histogram.buckets.find(b => b.category === 'CONVENIENCE')?.averageRating,
+    //   cell: (info) => {
+    //     const rating = info.getValue() as number | undefined
+    //     if (rating == null) return null
+    //     return (
+    //       <div className="flex items-center">
+    //         <span className="mr-1">{rating.toFixed(1)}</span>
+    //         <span className="text-yellow-400">★</span>
+    //       </div>
+    //     )
+    //   }
+    // },
+    // {
+    //   header: "Accuracy",
+    //   accessorFn: (row: Vehicle) =>
+    //     row.details?.ratings?.histogram.buckets.find(b => b.category === 'LISTING_ACCURACY')?.averageRating,
+    //   cell: (info) => {
+    //     const rating = info.getValue() as number | undefined
+    //     if (rating == null) return null
+    //     return (
+    //       <div className="flex items-center">
+    //         <span className="mr-1">{rating.toFixed(1)}</span>
+    //         <span className="text-yellow-400">★</span>
+    //       </div>
+    //     )
+    //   }
+    // },
     {
       header: "Listed",
       accessorFn: (row: Vehicle) => row.details?.vehicle?.listingCreatedTime,

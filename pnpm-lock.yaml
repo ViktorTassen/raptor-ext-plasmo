@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@fontsource/inter':
+    specifier: ^5.1.1
+    version: 5.1.1
   '@plasmohq/messaging':
     specifier: ^0.6.2
     version: 0.6.2(react@18.2.0)
@@ -484,6 +487,10 @@ packages:
 
   /@floating-ui/utils@0.2.9:
     resolution: {integrity: sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg==}
+    dev: false
+
+  /@fontsource/inter@5.1.1:
+    resolution: {integrity: sha512-weN3E+rq0Xb3Z93VHJ+Rc7WOQX9ETJPTAJ+gDcaMHtjft67L58sfS65rAjC5tZUXQ2FdZ/V1/sSzCwZ6v05kJw==}
     dev: false
 
   /@ianvs/prettier-plugin-sort-imports@4.1.1(prettier@3.2.4):

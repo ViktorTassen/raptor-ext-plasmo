@@ -17,7 +17,7 @@ export function RevenueCell({ dailyPricing }: RevenueCellProps) {
   const data = calculateMonthlyRevenue(dailyPricing)
 
   return (
-    <div className="w-[200px]">
+    <div className="w-[240px]">
       <div className="h-10">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>

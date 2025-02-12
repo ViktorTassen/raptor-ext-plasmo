@@ -4,6 +4,10 @@ module.exports = {
   content: ["./**/*.{ts,tsx}", "app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Inter var", "Inter", "sans-serif"],
+      },
+      
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
