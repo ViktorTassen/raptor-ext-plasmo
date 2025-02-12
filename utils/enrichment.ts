@@ -1,12 +1,9 @@
 import type { EnrichmentProgress, Vehicle } from "~types"
-import { Storage } from "@plasmohq/storage"
-
-const storage = new Storage({ area: "local" })
+import { db } from "~db"
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 const getRandomDelay = () => {
-  // Random delay between 2100ms and 3000ms
   return Math.floor(Math.random() * (3000 - 2100 + 1) + 2100)
 }
 
@@ -19,9 +16,9 @@ const formatDate = (date: Date): string => {
 
 const getStartDate = (): string => {
   const date = new Date()
-  date.setMonth(0) // January
-  date.setDate(1) // 1st day
-  date.setFullYear(date.getFullYear() - 1) // Last year
+  date.setMonth(0)
+  date.setDate(1)
+  date.setFullYear(date.getFullYear() - 1)
   return formatDate(date)
 }
 
@@ -32,10 +29,10 @@ const getEndDate = (): string => {
 const getDefaultDates = () => {
   const now = new Date()
   const startDate = new Date(now)
-  startDate.setDate(now.getDate() + 7) // 1 week from now
+  startDate.setDate(now.getDate() + 7)
   
   const endDate = new Date(now)
-  endDate.setDate(now.getDate() + 14) // 2 weeks from now
+  endDate.setDate(now.getDate() + 14)
   
   return {
     startDate: formatDate(startDate),
@@ -47,12 +44,11 @@ const getDefaultDates = () => {
 
 async function fetchMarketValue(vehicle: Vehicle, trim?: string) {
   try {
-    // Construct the vehicle identifier
     const id = [
       vehicle.year,
-      vehicle.make.toLowerCase().replace(/\s/g, '_'), // Replace spaces with underscores in make
-      vehicle.model.toLowerCase().replace(/\s/g, '_').replace(/-/g, ''), // Replace spaces with underscores and remove hyphens from model
-      (trim || '').toLowerCase().replace(/\s/g, '_').replace(/-/g, '') // Replace spaces with underscores and remove hyphens from trim
+      vehicle.make.toLowerCase().replace(/\s/g, '_'),
+      vehicle.model.toLowerCase().replace(/\s/g, '_').replace(/-/g, ''),
+      (trim || '').toLowerCase().replace(/\s/g, '_').replace(/-/g, '')
     ].filter(Boolean).join('_')
 
     const url = `https://marketvalues.vinaudit.com/getmarketvalue.php?key=1HB7ICF9L0GVH5Q&id=${id}`
@@ -67,13 +63,8 @@ async function fetchMarketValue(vehicle: Vehicle, trim?: string) {
 }
 
 async function fetchVehicleDetails(vehicleId: number) {
-  const searchParams = await storage.get<{
-    startDate: string
-    startTime: string
-    endDate: string
-    endTime: string
-  }>("searchParams")
-
+  // Get search params from IndexedDB
+  const searchParams = await db.searchParams.get(1)
   const defaultDates = getDefaultDates()
   const baseUrl = 'https://turo.com/api/vehicle/detail'
   const params = new URLSearchParams({
@@ -91,19 +82,16 @@ async function fetchVehicleDetails(vehicleId: number) {
     }
     const data = await response.json()
 
-        // Process distance data with unlimited handling
-        const processDistance = (distance: any) => {
-          if (distance?.unlimited) {
-            return {
-              scalar: distance.type === 'DAILY' ? 999 : 9999,
-              unit: distance.unit || 'MI'
-            }
-          }
-          return distance
+    const processDistance = (distance: any) => {
+      if (distance?.unlimited) {
+        return {
+          scalar: distance.type === 'DAILY' ? 999 : 9999,
+          unit: distance.unit || 'MI'
         }
+      }
+      return distance
+    }
 
-
-    // Extract only the fields we want to keep
     return {
       badges: data.badges,
       color: data.color,
@@ -161,7 +149,6 @@ async function fetchVehicleDailyPricing(vehicleId: number) {
     }
     const data = await response.json()
 
-    // Filter and transform the daily pricing data
     if (data.dailyPricingResponses) {
       const responses = data.dailyPricingResponses
       const result = []
@@ -170,7 +157,6 @@ async function fetchVehicleDailyPricing(vehicleId: number) {
         const currentDay = responses[i]
         const nextDay = responses[i + 1]
 
-        // Include if day is unavailable OR if next day exists and is unavailable
         if (currentDay.wholeDayUnavailable || (nextDay && nextDay.wholeDayUnavailable)) {
           result.push({
             date: currentDay.date,
@@ -190,60 +176,36 @@ async function fetchVehicleDailyPricing(vehicleId: number) {
   }
 }
 
-export async function enrichVehicles(
-  vehicles: Vehicle[],
-  onProgress: (progress: EnrichmentProgress) => void,
+export async function enrichVehicle(
+  vehicle: Vehicle,
   signal: AbortSignal
-): Promise<Vehicle[]> {
-  const results: Vehicle[] = []
-  
-  for (let i = 0; i < vehicles.length; i++) {
-    // Check if enrichment should be stopped
+): Promise<Vehicle | null> {
+  try {
     if (signal.aborted) {
-      console.log('[Raptor] Enrichment stopped by user')
-      break
+      return null
     }
 
-    try {
-      const vehicle = vehicles[i]
-      const details = await fetchVehicleDetails(vehicle.id)
-      const dailyPricing = await fetchVehicleDailyPricing(vehicle.id)
-      
-      // Fetch market value after getting vehicle details
-      if (details) {
-        await fetchMarketValue(vehicle, details.vehicle.trim)
-      }
-      
-      // Only add vehicle if both details and pricing were fetched successfully
-      if (details && dailyPricing) {
-        results.push({
-          ...vehicle,
-          details,
-          dailyPricing,
-          isEnriched: true
-        })
-      } else {
-        console.log(`[Raptor] Skipping vehicle ${vehicle.id} due to missing data`)
-      }
-    } catch (error) {
-      console.error(`[Raptor] Error enriching vehicle at index ${i}:`, error)
-      // Skip this vehicle and continue with the next one
+    const details = await fetchVehicleDetails(vehicle.id)
+    const dailyPricing = await fetchVehicleDailyPricing(vehicle.id)
+    
+    if (details) {
+      await fetchMarketValue(vehicle, details.vehicle.trim)
     }
     
-    onProgress({
-      current: i + 1,
-      total: vehicles.length,
-      isProcessing: true
-    })
+    if (details && dailyPricing) {
+      return {
+        ...vehicle,
+        details,
+        dailyPricing,
+        isEnriched: true
+      }
+    }
     
-    await delay(getRandomDelay()) // Random delay between requests
+    return null
+  } catch (error) {
+    console.error(`[Raptor] Error enriching vehicle ${vehicle.id}:`, error)
+    return null
+  } finally {
+    await delay(getRandomDelay())
   }
-  
-  onProgress({
-    current: vehicles.length,
-    total: vehicles.length,
-    isProcessing: false
-  })
-  
-  return results
 }

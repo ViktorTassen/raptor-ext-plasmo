@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useMemo } from "react"
 import {
   Bar,
   BarChart,
@@ -13,8 +13,8 @@ interface RevenueCellProps {
   dailyPricing: DailyPricing[]
 }
 
-export function RevenueCell({ dailyPricing }: RevenueCellProps) {
-  const data = calculateMonthlyRevenue(dailyPricing)
+export const RevenueCell = React.memo(function RevenueCell({ dailyPricing }: RevenueCellProps) {
+  const data = useMemo(() => calculateMonthlyRevenue(dailyPricing), [dailyPricing])
 
   return (
     <div className="w-[240px]">
@@ -24,11 +24,8 @@ export function RevenueCell({ dailyPricing }: RevenueCellProps) {
             <XAxis
               interval={"preserveStartEnd"}
               dataKey="name"
-              
               tickLine={false}
               axisLine={true}
-              // fontSize={9}
-              // height={16}
               fontSize={0}
               height={2}
             />
@@ -64,4 +61,4 @@ export function RevenueCell({ dailyPricing }: RevenueCellProps) {
       </div>
     </div>
   )
-}
+})

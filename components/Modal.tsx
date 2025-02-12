@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from "react"
 import iconCropped from "data-base64:~assets/turrex-icon-cropped.png"
-import { Storage } from "@plasmohq/storage"
+import { useLiveQuery } from "dexie-react-hooks"
 import VehicleTable from "./VehicleTable"
 import type { Vehicle, EnrichmentProgress } from "~types"
-import { enrichVehicles } from "~utils/enrichment"
+import { enrichVehicle } from "~utils/enrichment"
 import { Button } from "./ui/button"
-
-const storage = new Storage({area: "local"})
+import { db } from "~db"
 
 interface ModalProps {
   onClose: () => void
@@ -14,41 +13,53 @@ interface ModalProps {
 
 const Modal = ({ onClose }: ModalProps) => {
   const [isRecording, setIsRecording] = useState(false)
-  const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [enrichProgress, setEnrichProgress] = useState<EnrichmentProgress>({
     current: 0,
     total: 0,
     isProcessing: false
   })
   const abortControllerRef = useRef<AbortController | null>(null)
+  
+  // Use Dexie's live query to automatically update the UI when data changes
+  const vehicles = useLiveQuery(
+    async () => {
+      console.log('[Raptor] Fetching vehicles from IndexedDB...')
+      const result = await db.vehicles.toArray()
+      console.log('[Raptor] Found', result.length, 'vehicles in IndexedDB')
+      return result
+    },
+    [],
+    []
+  )
 
   useEffect(() => {
-    // Load initial state
-    storage.get<boolean>("isRecording").then(state => setIsRecording(state ?? false))
-    storage.get<Vehicle[]>("recordedVehicles").then(data => setVehicles(data ?? []))
+    const loadInitialState = async () => {
+      const state = await chrome.storage.local.get("isRecording")
+      setIsRecording(state.isRecording ?? false)
+    }
+    loadInitialState()
 
-    // Set up storage listeners
-    storage.watch({
-      isRecording: (change) => {
-        const newValue = change?.newValue
-        setIsRecording(newValue === true)
-      },
-      recordedVehicles: (change) => {
-        const newValue = change?.newValue as Vehicle[] | undefined
-        setVehicles(newValue ?? [])
+    // Listen for storage changes
+    chrome.storage.onChanged.addListener((changes) => {
+      if (changes.isRecording) {
+        setIsRecording(changes.isRecording.newValue)
       }
     })
   }, [])
 
   const handleRecordingToggle = async () => {
     const newState = !isRecording
-    await storage.set("isRecording", newState)
+    await chrome.storage.local.set({ isRecording: newState })
     setIsRecording(newState)
   }
 
   const clearRecordings = async () => {
-    await storage.set("recordedVehicles", [])
-    setVehicles([])
+    try {
+      await db.vehicles.clear()
+      console.log('[Raptor] Cleared all vehicles from IndexedDB')
+    } catch (error) {
+      console.error('[Raptor] Error clearing vehicles:', error)
+    }
   }
 
   const stopEnrichment = () => {
@@ -63,6 +74,11 @@ const Modal = ({ onClose }: ModalProps) => {
   }
 
   const handleEnrichData = async () => {
+    if (!vehicles?.length) {
+      console.log('[Raptor] No vehicles to enrich')
+      return
+    }
+
     const unenrichedVehicles = vehicles.filter(v => !v.isEnriched)
     if (unenrichedVehicles.length === 0) {
       alert("All vehicles are already enriched!")
@@ -71,35 +87,50 @@ const Modal = ({ onClose }: ModalProps) => {
 
     // If recording is active, stop it first
     if (isRecording) {
-      await storage.set("isRecording", false)
+      await chrome.storage.local.set({ isRecording: false })
       setIsRecording(false)
     }
 
     try {
       // Create new AbortController for this enrichment session
       abortControllerRef.current = new AbortController()
+      
+      setEnrichProgress({
+        current: 0,
+        total: unenrichedVehicles.length,
+        isProcessing: true
+      })
 
-      const enrichedVehicles = await enrichVehicles(
-        unenrichedVehicles, 
-        (progress) => {
-          setEnrichProgress(progress)
-        },
-        abortControllerRef.current.signal
-      )
+      // Enrich vehicles one by one
+      for (let i = 0; i < unenrichedVehicles.length; i++) {
+        if (abortControllerRef.current.signal.aborted) {
+          console.log('[Raptor] Enrichment stopped by user')
+          break
+        }
 
-      // Combine enriched vehicles with already enriched ones
-      const updatedVehicles = [
-        ...vehicles.filter(v => v.isEnriched),
-        ...enrichedVehicles
-      ]
+        const vehicle = unenrichedVehicles[i]
+        const enrichedVehicle = await enrichVehicle(vehicle, abortControllerRef.current.signal)
+        
+        if (enrichedVehicle) {
+          // Update the vehicle in the database
+          await db.vehicles.put(enrichedVehicle)
+          console.log('[Raptor] Updated vehicle in IndexedDB:', enrichedVehicle.id)
+        }
 
-      await storage.set("recordedVehicles", updatedVehicles)
-      setVehicles(updatedVehicles)
+        setEnrichProgress(prev => ({
+          ...prev,
+          current: i + 1
+        }))
+      }
     } catch (error) {
-      console.error("Error enriching vehicles:", error)
+      console.error("[Raptor] Error enriching vehicles:", error)
       alert("Error enriching vehicles. Please try again.")
     } finally {
       abortControllerRef.current = null
+      setEnrichProgress(prev => ({
+        ...prev,
+        isProcessing: false
+      }))
     }
   }
 
@@ -121,14 +152,14 @@ const Modal = ({ onClose }: ModalProps) => {
           </Button>
 
           <div>
-          <img src={iconCropped} style={{ width: '33px', marginLeft: 10 }} />
+            <img src={iconCropped} style={{ width: '33px', marginLeft: 10 }} />
             <div className="flex items-center space-x-4 mb-6">
               <Button
                 onClick={handleRecordingToggle}
                 variant={isRecording ? "destructive" : "default"}>
                 {isRecording ? 'Stop Recording' : 'Start Recording'}
               </Button>
-              {vehicles.length > 0 && (
+              {vehicles?.length > 0 && (
                 <>
                   <Button
                     onClick={handleEnrichData}
@@ -147,7 +178,7 @@ const Modal = ({ onClose }: ModalProps) => {
                   )}
                 </>
               )}
-              {vehicles.length > 0 && (
+              {vehicles?.length > 0 && (
                 <Button
                   onClick={clearRecordings}
                   variant="secondary">
@@ -156,8 +187,12 @@ const Modal = ({ onClose }: ModalProps) => {
               )}
             </div>
 
-            {vehicles.length > 0 && (
+            {vehicles?.length > 0 ? (
               <VehicleTable vehicles={vehicles} />
+            ) : (
+              <div className="text-center text-gray-500 mt-8">
+                No vehicles recorded yet. Start recording to collect data.
+              </div>
             )}
           </div>
         </div>

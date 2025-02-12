@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import {
   useReactTable,
   getCoreRowModel,
@@ -31,7 +31,7 @@ interface VehicleTableProps {
 const VehicleTable = ({ vehicles }: VehicleTableProps) => {
   const [sorting, setSorting] = useState<any[]>([])
 
-  const columns: ColumnDef<Vehicle>[] = [
+  const columns: ColumnDef<Vehicle>[] = useMemo(() => [
     {
       header: "Image",
       accessorFn: (row: Vehicle) => row.images[0]?.originalImageUrl,
@@ -113,10 +113,6 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         const today = new Date()
         const diffTime = Math.abs(today.getTime() - created.getTime())
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-      },
-      cell: (info) => {
-        const days = info.getValue() as number
-        return days
       }
     },
     {
@@ -127,7 +123,6 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       header: "Favs",
       accessorFn: (row: Vehicle) => row.details?.numberOfFavorites
     },
-
     {
       header: "Rating",
       accessorKey: "rating",
@@ -146,7 +141,6 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       header: "Reviews",
       accessorFn: (row: Vehicle) => row.details?.numberOfReviews
     },
-
     {
       header: "Instant Book",
       accessorFn: (row: Vehicle) => row.details?.instantBookLocationPreferences,
@@ -323,82 +317,6 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         return `${discount}%`
       }
     },
-   
-    // {
-    //   header: "Cleanliness",
-    //   accessorFn: (row: Vehicle) =>
-    //     row.details?.ratings?.histogram.buckets.find(b => b.category === 'CLEANLINESS')?.averageRating,
-    //   cell: (info) => {
-    //     const rating = info.getValue() as number | undefined
-    //     if (rating == null) return null
-    //     return (
-    //       <div className="flex items-center">
-    //         <span className="mr-1">{rating.toFixed(1)}</span>
-    //         <span className="text-yellow-400">★</span>
-    //       </div>
-    //     )
-    //   }
-    // },
-    // {
-    //   header: "Maintenance",
-    //   accessorFn: (row: Vehicle) =>
-    //     row.details?.ratings?.histogram.buckets.find(b => b.category === 'MAINTENANCE')?.averageRating,
-    //   cell: (info) => {
-    //     const rating = info.getValue() as number | undefined
-    //     if (rating == null) return null
-    //     return (
-    //       <div className="flex items-center">
-    //         <span className="mr-1">{rating.toFixed(1)}</span>
-    //         <span className="text-yellow-400">★</span>
-    //       </div>
-    //     )
-    //   }
-    // },
-    // {
-    //   header: "Communication",
-    //   accessorFn: (row: Vehicle) =>
-    //     row.details?.ratings?.histogram.buckets.find(b => b.category === 'COMMUNICATION')?.averageRating,
-    //   cell: (info) => {
-    //     const rating = info.getValue() as number | undefined
-    //     if (rating == null) return null
-    //     return (
-    //       <div className="flex items-center">
-    //         <span className="mr-1">{rating.toFixed(1)}</span>
-    //         <span className="text-yellow-400">★</span>
-    //       </div>
-    //     )
-    //   }
-    // },
-    // {
-    //   header: "Convenience",
-    //   accessorFn: (row: Vehicle) =>
-    //     row.details?.ratings?.histogram.buckets.find(b => b.category === 'CONVENIENCE')?.averageRating,
-    //   cell: (info) => {
-    //     const rating = info.getValue() as number | undefined
-    //     if (rating == null) return null
-    //     return (
-    //       <div className="flex items-center">
-    //         <span className="mr-1">{rating.toFixed(1)}</span>
-    //         <span className="text-yellow-400">★</span>
-    //       </div>
-    //     )
-    //   }
-    // },
-    // {
-    //   header: "Accuracy",
-    //   accessorFn: (row: Vehicle) =>
-    //     row.details?.ratings?.histogram.buckets.find(b => b.category === 'LISTING_ACCURACY')?.averageRating,
-    //   cell: (info) => {
-    //     const rating = info.getValue() as number | undefined
-    //     if (rating == null) return null
-    //     return (
-    //       <div className="flex items-center">
-    //         <span className="mr-1">{rating.toFixed(1)}</span>
-    //         <span className="text-yellow-400">★</span>
-    //       </div>
-    //     )
-    //   }
-    // },
     {
       header: "Listed",
       accessorFn: (row: Vehicle) => row.details?.vehicle?.listingCreatedTime,
@@ -434,7 +352,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         )
       }
     }
-  ]
+  ], [])
 
   const table = useReactTable({
     data: vehicles,
@@ -488,4 +406,4 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
   )
 }
 
-export default VehicleTable
+export default React.memo(VehicleTable)
