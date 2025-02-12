@@ -3,17 +3,12 @@ import type { PlasmoCSConfig } from "plasmo"
 import type { Vehicle } from "~types"
  
 export const config: PlasmoCSConfig = {
-    matches: ["https://turo.com/*"]
+    matches: ["https://turo.com/*"],
 }
 
 window.addEventListener('vehicles', async (event: CustomEvent) => {
     console.log('[Raptor] Vehicles event received')
     const rawVehicles = event.detail.vehicles
-
-    if (!Array.isArray(rawVehicles)) {
-      console.error('[Raptor] Invalid vehicles data received')
-      return
-    }
 
     // Transform the data to keep only required fields
     const vehicles: Vehicle[] = rawVehicles.map(v => ({

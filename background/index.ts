@@ -1,4 +1,5 @@
 import { Storage } from "@plasmohq/storage"
+import RaptorDB from "~db"
 
 const storage = new Storage({ area: "local" })
 
@@ -29,3 +30,14 @@ chrome.webRequest.onBeforeRequest.addListener(
   },
   { urls: ["*://*.turo.com/*"] }
 )
+
+
+
+
+// Initialize database in background script
+export const db = new RaptorDB()
+
+// Initialize the database
+db.open().catch(error => {
+  console.error('[Raptor] Failed to initialize database:', error)
+})

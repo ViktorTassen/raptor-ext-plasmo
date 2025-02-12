@@ -1,18 +1,26 @@
-import React, { useState, useEffect, useRef } from "react"
+import React, { useRef, useState } from "react"
+import { sendToBackground } from "@plasmohq/messaging"
+import { Storage } from "@plasmohq/storage"
+import { useStorage } from "@plasmohq/storage/hook"
 import iconCropped from "data-base64:~assets/turrex-icon-cropped.png"
-import { useLiveQuery } from "dexie-react-hooks"
 import VehicleTable from "./VehicleTable"
 import type { Vehicle, EnrichmentProgress } from "~types"
 import { enrichVehicle } from "~utils/enrichment"
 import { Button } from "./ui/button"
-import { db } from "~db"
+
+const storage = new Storage({ area: "local" })
 
 interface ModalProps {
   onClose: () => void
 }
 
 const Modal = ({ onClose }: ModalProps) => {
-  const [isRecording, setIsRecording] = useState(false)
+  const [isRecording, setIsRecording] = useStorage({
+    key: "isRecording",
+    instance: storage
+  })
+
+  const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [enrichProgress, setEnrichProgress] = useState<EnrichmentProgress>({
     current: 0,
     total: 0,
@@ -20,43 +28,35 @@ const Modal = ({ onClose }: ModalProps) => {
   })
   const abortControllerRef = useRef<AbortController | null>(null)
   
-  // Use Dexie's live query to automatically update the UI when data changes
-  const vehicles = useLiveQuery(
-    async () => {
-      console.log('[Raptor] Fetching vehicles from IndexedDB...')
-      const result = await db.vehicles.toArray()
-      console.log('[Raptor] Found', result.length, 'vehicles in IndexedDB')
-      return result
-    },
-    [],
-    []
-  )
-
-  useEffect(() => {
-    const loadInitialState = async () => {
-      const state = await chrome.storage.local.get("isRecording")
-      setIsRecording(state.isRecording ?? false)
-    }
-    loadInitialState()
-
-    // Listen for storage changes
-    chrome.storage.onChanged.addListener((changes) => {
-      if (changes.isRecording) {
-        setIsRecording(changes.isRecording.newValue)
+  // Fetch vehicles from background
+  const fetchVehicles = async () => {
+    try {
+      const response = await sendToBackground({
+        name: "getVehicles"
+      })
+      if (response.success) {
+        setVehicles(response.vehicles)
       }
-    })
+    } catch (error) {
+      console.error('[Raptor] Error fetching vehicles:', error)
+    }
+  }
+
+  React.useEffect(() => {
+    fetchVehicles()
   }, [])
 
-  const handleRecordingToggle = async () => {
-    const newState = !isRecording
-    await chrome.storage.local.set({ isRecording: newState })
-    setIsRecording(newState)
+  const handleRecordingToggle = () => {
+    setIsRecording(!isRecording)
   }
 
   const clearRecordings = async () => {
     try {
-      await db.vehicles.clear()
-      console.log('[Raptor] Cleared all vehicles from IndexedDB')
+      await sendToBackground({
+        name: "clearVehicles"
+      })
+      setVehicles([])
+      console.log('[Raptor] Cleared all vehicles')
     } catch (error) {
       console.error('[Raptor] Error clearing vehicles:', error)
     }
@@ -87,7 +87,6 @@ const Modal = ({ onClose }: ModalProps) => {
 
     // If recording is active, stop it first
     if (isRecording) {
-      await chrome.storage.local.set({ isRecording: false })
       setIsRecording(false)
     }
 
@@ -112,9 +111,16 @@ const Modal = ({ onClose }: ModalProps) => {
         const enrichedVehicle = await enrichVehicle(vehicle, abortControllerRef.current.signal)
         
         if (enrichedVehicle) {
-          // Update the vehicle in the database
-          await db.vehicles.put(enrichedVehicle)
-          console.log('[Raptor] Updated vehicle in IndexedDB:', enrichedVehicle.id)
+          // Update the vehicle in the background
+          await sendToBackground({
+            name: "updateVehicle",
+            body: enrichedVehicle
+          })
+          // Update local state
+          setVehicles(prev => prev.map(v => 
+            v.id === enrichedVehicle.id ? enrichedVehicle : v
+          ))
+          console.log('[Raptor] Updated vehicle:', enrichedVehicle.id)
         }
 
         setEnrichProgress(prev => ({

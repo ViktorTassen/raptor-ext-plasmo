@@ -1,5 +1,7 @@
-import type { EnrichmentProgress, Vehicle } from "~types"
-import { db } from "~db"
+import { Storage } from "@plasmohq/storage"
+import type { Vehicle } from "~types"
+
+const storage = new Storage({ area: "local" })
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -63,8 +65,8 @@ async function fetchMarketValue(vehicle: Vehicle, trim?: string) {
 }
 
 async function fetchVehicleDetails(vehicleId: number) {
-  // Get search params from IndexedDB
-  const searchParams = await db.searchParams.get(1)
+  // Get search params from storage
+  const searchParams = await storage.get("searchParams") as any
   const defaultDates = getDefaultDates()
   const baseUrl = 'https://turo.com/api/vehicle/detail'
   const params = new URLSearchParams({

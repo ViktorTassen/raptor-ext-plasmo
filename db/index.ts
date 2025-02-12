@@ -1,6 +1,9 @@
 import Dexie, { type Table } from "dexie"
 import type { Vehicle } from "~types"
 
+// Create a unique database name that includes the extension ID
+const DB_NAME = `raptor_ext_${chrome.runtime.id}`
+
 export class RaptorDB extends Dexie {
   vehicles!: Table<Vehicle>
   searchParams!: Table<{
@@ -12,7 +15,7 @@ export class RaptorDB extends Dexie {
   }>
 
   constructor() {
-    super("RaptorDB")
+    super(DB_NAME)
     this.version(1).stores({
       vehicles: "id, make, model, year, hostId, isEnriched",
       searchParams: "++id"
@@ -25,7 +28,5 @@ export class RaptorDB extends Dexie {
   }
 }
 
-export const db = new RaptorDB()
-
-// Don't auto-open the database, let the background script handle it
-console.log('[Raptor] Database instance created')
+// Only export the class, don't create instance here
+export default RaptorDB

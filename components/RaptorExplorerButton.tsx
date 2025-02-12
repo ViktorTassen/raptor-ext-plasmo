@@ -1,27 +1,16 @@
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { Storage } from "@plasmohq/storage"
+import { useStorage } from "@plasmohq/storage/hook"
 import { Disc2 } from "lucide-react"
 import Modal from "./Modal"
 import { Button } from "./ui/button"
 
-const storage = new Storage({area:"local"})
-
 const RaptorExplorerButton = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isRecording, setIsRecording] = useState(false)
-
-  useEffect(() => {
-    // Load initial state
-    storage.get<boolean>("isRecording").then(state => setIsRecording(state ?? false))
-
-    // Set up storage listener
-    storage.watch({
-      isRecording: (change) => {
-        const newValue = change?.newValue
-        setIsRecording(newValue === true)
-      }
-    })
-  }, [])
+  const [isRecording] = useStorage({
+    key: "isRecording",
+    instance: new Storage()
+  })
 
   return (
     <>
