@@ -203,7 +203,7 @@ const Modal = ({ onClose }: ModalProps) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-25 flex justify-start">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-start">
       <div className="w-[95%] max-w-[95%] bg-white h-[calc(100vh)] shadow-xl 
         transform transition-transform duration-300 ease-in-out overflow-auto relative"
         onClick={(e) => e.stopPropagation()}>
