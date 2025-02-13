@@ -1,6 +1,6 @@
 import React from "react"
 import type { Table } from "@tanstack/react-table"
-import { Check, ChevronDown } from "lucide-react"
+import { ChevronDown, Group } from "lucide-react"
 import { Button } from "~components/ui/button"
 import {
   DropdownMenu,
@@ -11,33 +11,35 @@ import {
   DropdownMenuTrigger,
 } from "~components/ui/dropdown-menu"
 
-interface ColumnVisibilityDropdownProps<TData> {
+interface GroupingDropdownProps<TData> {
   table: Table<TData>
 }
 
-export function ColumnVisibilityDropdown<TData>({ 
+export function GroupingDropdown<TData>({ 
   table 
-}: ColumnVisibilityDropdownProps<TData>) {
+}: GroupingDropdownProps<TData>) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="ml-auto">
-          Columns <ChevronDown className="ml-2 h-4 w-4" />
+          <Group className="mr-2 h-4 w-4" />
+          Group By
+          <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[200px]">
-        <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+        <DropdownMenuLabel>Group by column</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {table
           .getAllColumns()
-          .filter(column => column.getCanHide())
+          .filter(column => column.getCanGroup())
           .map(column => {
             return (
               <DropdownMenuCheckboxItem
                 key={column.id}
                 className="capitalize"
-                checked={column.getIsVisible()}
-                onCheckedChange={value => column.toggleVisibility(!!value)}>
+                checked={column.getIsGrouped()}
+                onCheckedChange={() => column.toggleGrouping()}>
                 {column.id}
               </DropdownMenuCheckboxItem>
             )

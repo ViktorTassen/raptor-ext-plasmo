@@ -9,6 +9,7 @@ import type { Vehicle, EnrichmentProgress } from "~types"
 import { enrichVehicle } from "~utils/enrichment"
 import { downloadCSV } from "~utils/export"
 import { Button } from "./ui/button"
+import { PortalProvider } from "./ui/portal-container"
 import { getCurrencySymbol } from "~utils/currency"
 import { calculateAverageMonthlyRevenue, calculatePreviousYearRevenue } from "~utils/revenue"
 import { getVehicleTypeDisplay } from "~utils/vehicleTypes"
@@ -190,10 +191,10 @@ const Modal = ({ onClose }: ModalProps) => {
       color: vehicle.details?.color || '',
       weeklyDiscount: vehicle.details?.rate?.weeklyDiscountPercentage ? `${vehicle.details.rate.weeklyDiscountPercentage}%` : '',
       monthlyDiscount: vehicle.details?.rate?.monthlyDiscountPercentage ? `${vehicle.details.rate.monthlyDiscountPercentage}%` : '',
-      dailyDistance: vehicle.details?.rate?.dailyDistance ? `${vehicle.details.rate.dailyDistance.scalar}` : '',
-      weeklyDistance: vehicle.details?.rate?.weeklyDistance ? `${vehicle.details.rate.weeklyDistance.scalar}` : '',
-      monthlyDistance: vehicle.details?.rate?.monthlyDistance ? `${vehicle.details.rate.monthlyDistance.scalar}` : '',
-      excessFee: vehicle.details?.rate?.excessFeePerDistance ? `${vehicle.details.rate.excessFeePerDistance.amount}` : '',
+      dailyDistance: vehicle.details?.rate?.dailyDistance ? `${vehicle.details.rate.dailyDistance.scalar} ${vehicle.details.rate.dailyDistance.unit}` : '',
+      weeklyDistance: vehicle.details?.rate?.weeklyDistance ? `${vehicle.details.rate.weeklyDistance.scalar} ${vehicle.details.rate.weeklyDistance.unit}` : '',
+      monthlyDistance: vehicle.details?.rate?.monthlyDistance ? `${vehicle.details.rate.monthlyDistance.scalar} ${vehicle.details.rate.monthlyDistance.unit}` : '',
+      excessFee: vehicle.details?.rate?.excessFeePerDistance ? `${getCurrencySymbol(vehicle.details.rate.excessFeePerDistance.currency)}${vehicle.details.rate.excessFeePerDistance.amount}` : '',
       listingDate: vehicle.details?.vehicle?.listingCreatedTime ? new Date(vehicle.details.vehicle.listingCreatedTime).toLocaleDateString() : '',
       vehicleId: vehicle.id,
       listingUrl: vehicle.details?.vehicle?.url || ''
@@ -203,75 +204,77 @@ const Modal = ({ onClose }: ModalProps) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-start">
-      <div className="w-[95%] max-w-[95%] bg-white h-[calc(100vh)] shadow-xl 
-        transform transition-transform duration-300 ease-in-out overflow-auto relative"
-        onClick={(e) => e.stopPropagation()}>
-        
-        <div className="p-6">
-          <Button
-            variant="link"
-            size="icon"
-            onClick={onClose}
-            className="rounded-full absolute top-6 right-6 scale[2]">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </Button>
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-25 flex justify-start">
+      <PortalProvider>
+        <div className="w-[95%] max-w-[95%] bg-white h-[calc(100vh)] shadow-xl 
+          transform transition-transform duration-300 ease-in-out overflow-auto relative"
+          onClick={(e) => e.stopPropagation()}>
+          
+          <div className="p-6">
+            <Button
+              variant="link"
+              size="icon"
+              onClick={onClose}
+              className="rounded-full absolute top-6 right-6 scale[2]">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </Button>
 
-          <div>
-            <img src={iconCropped} style={{ width: '33px', marginLeft: 10 }} />
-            <div className="flex items-center space-x-4 mb-6">
-              <Button
-                onClick={handleRecordingToggle}
-                variant={isRecording ? "destructive" : "default"}>
-                {isRecording ? 'Stop Recording' : 'Start Recording'}
-              </Button>
-              {vehicles?.length > 0 && (
-                <>
-                  <Button
-                    onClick={handleEnrichData}
-                    disabled={enrichProgress.isProcessing}
-                    variant="default">
-                    {enrichProgress.isProcessing 
-                      ? `Enriching ${enrichProgress.current}/${enrichProgress.total}` 
-                      : 'Enrich Data'}
-                  </Button>
-                  {enrichProgress.isProcessing && (
-                    <Button
-                      onClick={stopEnrichment}
-                      variant="destructive">
-                      Stop Enriching
-                    </Button>
-                  )}
-                  <Button
-                    onClick={handleExportCSV}
-                    variant="outline"
-                    className="flex items-center gap-2">
-                    <Download className="h-4 w-4" />
-                    Export CSV
-                  </Button>
-                </>
-              )}
-              {vehicles?.length > 0 && (
+            <div>
+              <img src={iconCropped} style={{ width: '33px', marginLeft: 10 }} />
+              <div className="flex items-center space-x-4 mb-6">
                 <Button
-                  onClick={clearRecordings}
-                  variant="secondary">
-                  Clear All
+                  onClick={handleRecordingToggle}
+                  variant={isRecording ? "destructive" : "default"}>
+                  {isRecording ? 'Stop Recording' : 'Start Recording'}
                 </Button>
+                {vehicles?.length > 0 && (
+                  <>
+                    <Button
+                      onClick={handleEnrichData}
+                      disabled={enrichProgress.isProcessing}
+                      variant="default">
+                      {enrichProgress.isProcessing 
+                        ? `Enriching ${enrichProgress.current}/${enrichProgress.total}` 
+                        : 'Enrich Data'}
+                    </Button>
+                    {enrichProgress.isProcessing && (
+                      <Button
+                        onClick={stopEnrichment}
+                        variant="destructive">
+                        Stop Enriching
+                      </Button>
+                    )}
+                    <Button
+                      onClick={handleExportCSV}
+                      variant="outline"
+                      className="flex items-center gap-2">
+                      <Download className="h-4 w-4" />
+                      Export CSV
+                    </Button>
+                  </>
+                )}
+                {vehicles?.length > 0 && (
+                  <Button
+                    onClick={clearRecordings}
+                    variant="secondary">
+                    Clear All
+                  </Button>
+                )}
+              </div>
+
+              {vehicles?.length > 0 ? (
+                <VehicleTable vehicles={vehicles} />
+              ) : (
+                <div className="text-center text-gray-500 mt-8">
+                  No vehicles recorded yet. Start recording to collect data.
+                </div>
               )}
             </div>
-
-            {vehicles?.length > 0 ? (
-              <VehicleTable vehicles={vehicles} />
-            ) : (
-              <div className="text-center text-gray-500 mt-8">
-                No vehicles recorded yet. Start recording to collect data.
-              </div>
-            )}
           </div>
         </div>
-      </div>
+      </PortalProvider>
     </div>
   )
 }
