@@ -37,12 +37,14 @@ export function BadgePopover({ badges = [], maxVisible = 1 }: BadgePopoverProps)
             </Badge>
           ))}
           {hasMore && (
-            <PopoverTrigger asChild>
+            <PopoverTrigger>
+                <div className="cursor-pointer">
               <Badge 
                 variant="secondary"
                 className="cursor-pointer hover:bg-secondary/80 transition-colors">
                 +{remainingBadges.length}
               </Badge>
+              </div>
             </PopoverTrigger>
           )}
         </div>

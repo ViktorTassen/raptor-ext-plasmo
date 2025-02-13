@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
 import type { SortingState, VisibilityState } from "@tanstack/react-table"
@@ -15,10 +15,29 @@ interface VehicleTableProps {
 const VehicleTable = ({ vehicles }: VehicleTableProps) => {
   const [sorting, setSorting] = useState<SortingState>([])
   
+  // Initialize with all columns visible by default
+  const defaultColumnVisibility = columns.reduce((acc, column) => {
+    acc[column.id] = true
+    return acc
+  }, {} as VisibilityState)
+  
   const [columnVisibility, setColumnVisibility] = useStorage<VisibilityState>({
     key: "tableColumnVisibility",
     instance: storage
   })
+
+  // Initialize storage with default values if empty
+  useEffect(() => {
+    const initializeStorage = async () => {
+      const currentVisibility = await storage.get("tableColumnVisibility")
+      if (!currentVisibility) {
+        await storage.set("tableColumnVisibility", defaultColumnVisibility)
+        setColumnVisibility(defaultColumnVisibility)
+      }
+    }
+
+    initializeStorage()
+  }, [])
 
   return (
     <DataTable
@@ -26,7 +45,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       columns={columns}
       sorting={sorting}
       onSortingChange={setSorting}
-      columnVisibility={columnVisibility || {}}
+      columnVisibility={columnVisibility || defaultColumnVisibility}
       onColumnVisibilityChange={setColumnVisibility}
     />
   )
