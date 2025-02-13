@@ -2,11 +2,16 @@ import React, { useRef, useState, useEffect } from "react"
 import { sendToBackground } from "@plasmohq/messaging"
 import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
+import { Disc2, Download } from "lucide-react"
 import iconCropped from "data-base64:~assets/turrex-icon-cropped.png"
 import VehicleTable from "./VehicleTable"
 import type { Vehicle, EnrichmentProgress } from "~types"
 import { enrichVehicle } from "~utils/enrichment"
+import { downloadCSV } from "~utils/export"
 import { Button } from "./ui/button"
+import { getCurrencySymbol } from "~utils/currency"
+import { calculateAverageMonthlyRevenue, calculatePreviousYearRevenue } from "~utils/revenue"
+import { getVehicleTypeDisplay } from "~utils/vehicleTypes"
 
 const storage = new Storage({ area: "local" })
 
@@ -156,6 +161,47 @@ const Modal = ({ onClose }: ModalProps) => {
     }
   }
 
+  const handleExportCSV = () => {
+    const exportData = vehicles.map(vehicle => ({
+      type: getVehicleTypeDisplay(vehicle.type),
+      make: vehicle.make,
+      model: vehicle.model,
+      trim: vehicle.details?.vehicle?.trim || '',
+      year: vehicle.year,
+      avgMonthlyRevenue: !vehicle.dailyPricing ? 0 : calculateAverageMonthlyRevenue(vehicle.dailyPricing),
+      prevYearRevenue: !vehicle.dailyPricing ? 0 : calculatePreviousYearRevenue(vehicle.dailyPricing),
+      marketValue: vehicle.details?.marketValue?.below || '',
+      daysOnTuro: vehicle.details?.vehicle?.listingCreatedTime ? Math.ceil(
+        Math.abs(new Date().getTime() - new Date(vehicle.details.vehicle.listingCreatedTime).getTime()) / 
+        (1000 * 60 * 60 * 24)
+      ) : '',
+      completedTrips: vehicle.completedTrips,
+      favorites: vehicle.details?.numberOfFavorites || '',
+      rating: vehicle.rating || '',
+      reviews: vehicle.details?.numberOfReviews || '',
+      hostId: vehicle.hostId,
+      hostName: vehicle.details?.owner?.name || '',
+      isAllStarHost: vehicle.details?.owner?.allStarHost || false,
+      isProHost: vehicle.details?.owner?.proHost || false,
+      protectionPlan: vehicle.details?.hostTakeRate ? `${(vehicle.details.hostTakeRate * 100).toFixed(0)}%` : '',
+      city: vehicle.location.city || '',
+      state: vehicle.location.state || '',
+      transmission: vehicle.details?.vehicle?.automaticTransmission ? 'Automatic' : 'Manual',
+      color: vehicle.details?.color || '',
+      weeklyDiscount: vehicle.details?.rate?.weeklyDiscountPercentage ? `${vehicle.details.rate.weeklyDiscountPercentage}%` : '',
+      monthlyDiscount: vehicle.details?.rate?.monthlyDiscountPercentage ? `${vehicle.details.rate.monthlyDiscountPercentage}%` : '',
+      dailyDistance: vehicle.details?.rate?.dailyDistance ? `${vehicle.details.rate.dailyDistance.scalar}` : '',
+      weeklyDistance: vehicle.details?.rate?.weeklyDistance ? `${vehicle.details.rate.weeklyDistance.scalar}` : '',
+      monthlyDistance: vehicle.details?.rate?.monthlyDistance ? `${vehicle.details.rate.monthlyDistance.scalar}` : '',
+      excessFee: vehicle.details?.rate?.excessFeePerDistance ? `${vehicle.details.rate.excessFeePerDistance.amount}` : '',
+      listingDate: vehicle.details?.vehicle?.listingCreatedTime ? new Date(vehicle.details.vehicle.listingCreatedTime).toLocaleDateString() : '',
+      vehicleId: vehicle.id,
+      listingUrl: vehicle.details?.vehicle?.url || ''
+    }))
+
+    downloadCSV(exportData, `vehicles-export-${new Date().toISOString().split('T')[0]}.csv`)
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-25 flex justify-start">
       <div className="w-[95%] max-w-[95%] bg-white h-[calc(100vh)] shadow-xl 
@@ -198,6 +244,13 @@ const Modal = ({ onClose }: ModalProps) => {
                       Stop Enriching
                     </Button>
                   )}
+                  <Button
+                    onClick={handleExportCSV}
+                    variant="outline"
+                    className="flex items-center gap-2">
+                    <Download className="h-4 w-4" />
+                    Export CSV
+                  </Button>
                 </>
               )}
               {vehicles?.length > 0 && (
