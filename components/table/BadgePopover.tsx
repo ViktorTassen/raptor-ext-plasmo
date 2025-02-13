@@ -25,39 +25,32 @@ export function BadgePopover({ badges = [], maxVisible = 1 }: BadgePopoverProps)
   const hasMore = remainingBadges.length > 0
 
   return (
-    <div style={{ display: 'inline-flex' }}>
+    <div className="inline-flex">
       <Popover>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div className="flex items-center">
           {visibleBadges.map((badge) => (
             <Badge 
               key={badge.id}
               variant="default"
-              style={{ margin: '2px' }}>
+              className="mr-1">
               {badge.label}
             </Badge>
           ))}
           {hasMore && (
-            <PopoverTrigger>
+            <PopoverTrigger asChild>
               <Badge 
                 variant="secondary"
-                style={{
-                  margin: '2px',
-                  cursor: 'pointer',
-                  transition: 'background-color 0.2s'
-                }}>
+                className="cursor-pointer hover:bg-secondary/80 transition-colors">
                 +{remainingBadges.length}
               </Badge>
             </PopoverTrigger>
           )}
         </div>
         {hasMore && (
-          <PopoverContent>
-            <div style={{ 
-              maxWidth: '300px'
-            }}>
+          <PopoverContent className="w-auto max-w-[300px]">
+            <div className="flex flex-wrap gap-1">
               {badges.map((badge) => (
                 <Badge 
-                  style={{margin: 2}}
                   key={badge.id}
                   variant="default">
                   {badge.label}

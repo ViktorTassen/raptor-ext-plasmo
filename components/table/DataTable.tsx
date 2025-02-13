@@ -4,12 +4,9 @@ import {
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
-  getGroupedRowModel,
-  getExpandedRowModel,
   type ColumnDef,
   type SortingState,
   type VisibilityState,
-  type GroupingState,
   flexRender
 } from "@tanstack/react-table"
 import {
@@ -21,7 +18,6 @@ import {
   TableRow,
 } from "~components/ui/table"
 import { ColumnVisibilityDropdown } from "./ColumnVisibilityDropdown"
-import { GroupingDropdown } from "./GroupingDropdown"
 
 interface DataTableProps<TData> {
   data: TData[]
@@ -30,8 +26,6 @@ interface DataTableProps<TData> {
   onSortingChange?: (sorting: SortingState) => void
   columnVisibility: VisibilityState
   onColumnVisibilityChange: (visibility: VisibilityState) => void
-  grouping: GroupingState
-  onGroupingChange: (grouping: GroupingState) => void
 }
 
 export function DataTable<TData>({
@@ -40,9 +34,7 @@ export function DataTable<TData>({
   sorting = [],
   onSortingChange,
   columnVisibility,
-  onColumnVisibilityChange,
-  grouping,
-  onGroupingChange
+  onColumnVisibilityChange
 }: DataTableProps<TData>) {
   // Early return if data is not available
   if (!Array.isArray(data) || data.length === 0) {
@@ -58,24 +50,18 @@ export function DataTable<TData>({
     columns,
     state: {
       sorting,
-      columnVisibility,
-      grouping
+      columnVisibility
     },
     onSortingChange: onSortingChange,
     onColumnVisibilityChange: onColumnVisibilityChange,
-    onGroupingChange: onGroupingChange,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getGroupedRowModel: getGroupedRowModel(),
-    getExpandedRowModel: getExpandedRowModel(),
-    enableGrouping: true
+    getSortedRowModel: getSortedRowModel()
   })
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end gap-2">
-        <GroupingDropdown table={table} />
+      <div className="flex justify-end">
         <ColumnVisibilityDropdown table={table} />
       </div>
       <div className="border rounded-md overflow-hidden">
