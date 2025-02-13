@@ -1,5 +1,5 @@
 import { Storage } from "@plasmohq/storage"
-import type { Vehicle } from "~types"
+import type { Vehicle, MarketValue, VehicleDetails } from "~types"
 
 const storage = new Storage({ area: "local" })
 
@@ -44,7 +44,7 @@ const getDefaultDates = () => {
   }
 }
 
-async function fetchMarketValue(vehicle: Vehicle, trim?: string) {
+async function fetchMarketValue(vehicle: Vehicle, trim?: string): Promise<MarketValue | null> {
   try {
     const id = [
       vehicle.year,
@@ -57,14 +57,22 @@ async function fetchMarketValue(vehicle: Vehicle, trim?: string) {
     const response = await fetch(url)
     const data = await response.json()
     console.log('[Raptor] Market value data for', id, ':', data)
-    return data
+    
+    if (data.success && data.prices) {
+      return {
+        below: data.prices.below,
+        average: data.prices.average,
+        above: data.prices.above
+      }
+    }
+    return null
   } catch (error) {
     console.error('[Raptor] Error fetching market value:', error)
     return null
   }
 }
 
-async function fetchVehicleDetails(vehicleId: number) {
+async function fetchVehicleDetails(vehicleId: number): Promise<VehicleDetails | null> {
   // Get search params from storage
   const searchParams = await storage.get("searchParams") as any
   const defaultDates = getDefaultDates()
@@ -121,14 +129,14 @@ async function fetchVehicleDetails(vehicleId: number) {
         weeklyDiscountPercentage: data.rate?.weeklyDiscountPercentage,
         weeklyDistance: processDistance({ ...data.rate?.weeklyDistance, type: 'WEEKLY' })
       },
-      ratings: data.ratings,
       tripCount: data.tripCount,
       vehicle: {
         automaticTransmission: data.vehicle?.automaticTransmission,
         listingCreatedTime: data.vehicle?.listingCreatedTime,
         trim: data.vehicle?.trim,
         url: data.vehicle?.url
-      }
+      },
+      marketValue: undefined // Initialize with undefined, will be set later if available
     }
   } catch (error) {
     console.error(`Error fetching vehicle ${vehicleId} details:`, error)
@@ -191,7 +199,10 @@ export async function enrichVehicle(
     const dailyPricing = await fetchVehicleDailyPricing(vehicle.id)
     
     if (details) {
-      await fetchMarketValue(vehicle, details.vehicle.trim)
+      const marketValue = await fetchMarketValue(vehicle, details.vehicle.trim)
+      if (marketValue) {
+        details.marketValue = marketValue
+      }
     }
     
     if (details && dailyPricing) {

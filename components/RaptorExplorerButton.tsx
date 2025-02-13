@@ -18,7 +18,7 @@ const RaptorExplorerButton = () => {
         variant="default"
         onClick={() => setIsModalOpen(true)}
         size="sm"
-        className="flex items-center gap-2">
+        className="flex items-center gap-2 z-250">
         <span>Raptor Explorer</span>
         {isRecording && (
           <Disc2 className="h-4 w-4 text-red-500 animate-pulse" />

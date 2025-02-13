@@ -105,6 +105,15 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       }
     },
     {
+      header: "Avg Market Value",
+      accessorFn: (row: Vehicle) => row.details?.marketValue?.below,
+      cell: (info) => {
+        const value = info.getValue() as number | undefined
+        if (!value) return '-'
+        return `$${value.toLocaleString()}`
+      }
+    },
+    {
       header: "Days on Turo",
       accessorFn: (row: Vehicle) => {
         const listingDate = row.details?.vehicle?.listingCreatedTime

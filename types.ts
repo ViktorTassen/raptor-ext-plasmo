@@ -71,16 +71,11 @@ export interface VehicleRate {
   weeklyDistance: Distance
 }
 
-export interface RatingBucket {
-  averageRating: number
-  category: 'CLEANLINESS' | 'MAINTENANCE' | 'COMMUNICATION' | 'CONVENIENCE' | 'LISTING_ACCURACY'
-  label: string
-}
 
-export interface VehicleRatings {
-  histogram: {
-    buckets: RatingBucket[]
-  }
+export interface MarketValue {
+  below: number
+  average: number
+  above: number
 }
 
 export interface VehicleDetails {
@@ -101,7 +96,6 @@ export interface VehicleDetails {
   owner: VehicleOwner
   instantBookLocationPreferences: InstantBookLocationPreferences
   rate: VehicleRate
-  ratings: VehicleRatings
   tripCount: number
   vehicle: {
     automaticTransmission: boolean
@@ -109,6 +103,7 @@ export interface VehicleDetails {
     trim: string
     url: string
   }
+  marketValue?: MarketValue
 }
 
 export interface DailyPricing {

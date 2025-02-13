@@ -30,6 +30,7 @@ export const RevenueCell = React.memo(function RevenueCell({ dailyPricing }: Rev
               height={2}
             />
             <Tooltip
+              wrapperStyle={{zIndex: 1000}}
               cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
@@ -37,10 +38,10 @@ export const RevenueCell = React.memo(function RevenueCell({ dailyPricing }: Rev
                   return (
                     <div className="rounded-lg border bg-white p-2 shadow-sm">
                       <div className="flex flex-col gap-1">
-                        <span className="text-[0.70rem] text-muted-foreground">
+                        <span className="text-[0.70rem]">
                           {data.fullMonth} {data.year}
                         </span>
-                        <span className="font-bold text-muted-foreground">
+                        <span className="font-bold">
                           ${payload[0].value?.toLocaleString()}
                         </span>
                       </div>
