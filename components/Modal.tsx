@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react"
+import React, { useRef, useState, useEffect } from "react"
 import { sendToBackground } from "@plasmohq/messaging"
 import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
@@ -28,6 +28,22 @@ const Modal = ({ onClose }: ModalProps) => {
   })
   const abortControllerRef = useRef<AbortController | null>(null)
   
+  useEffect(() => {
+    // Hide header when modal opens
+    const header = document.querySelector('header')
+    if (header) {
+      header.style.display = 'none'
+    }
+
+    // Restore header visibility when modal closes
+    return () => {
+      const header = document.querySelector('header')
+      if (header) {
+        header.style.display = ''
+      }
+    }
+  }, [])
+
   // Fetch vehicles from background
   const fetchVehicles = async () => {
     try {
@@ -148,10 +164,10 @@ const Modal = ({ onClose }: ModalProps) => {
         
         <div className="p-6">
           <Button
-            variant="default"
+            variant="link"
             size="icon"
             onClick={onClose}
-            className="rounded-full absolute top-6 right-6">
+            className="rounded-full absolute top-6 right-6 scale[2]">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>

@@ -17,7 +17,7 @@ export const RevenueCell = React.memo(function RevenueCell({ dailyPricing }: Rev
   const data = useMemo(() => calculateMonthlyRevenue(dailyPricing), [dailyPricing])
 
   return (
-    <div className="w-[240px]">
+    <div className="w-[200px]">
       <div className="h-10">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
@@ -53,9 +53,10 @@ export const RevenueCell = React.memo(function RevenueCell({ dailyPricing }: Rev
             />
             <Bar
               dataKey="total"
-              fill="currentColor"
-              radius={[2, 2, 0, 0]}
-              className="fill-primary"
+              // fill="currentColor"
+              fill="#593BFB"
+              radius={[0, 0, 0, 0]}
+              // className="fill-primary"
             />
           </BarChart>
         </ResponsiveContainer>

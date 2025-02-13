@@ -34,14 +34,19 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
   const columns: ColumnDef<Vehicle>[] = useMemo(() => [
     {
       header: "Image",
-      accessorFn: (row: Vehicle) => row.images[0]?.originalImageUrl,
-      cell: (info) => (
-        <img
-          src={info.getValue() as string}
-          alt="Vehicle"
-          className="h-8 w-20 object-cover rounded"
-        />
-      ),
+      accessorFn: (row: Vehicle) => row.images[0]?.resizeableUrlTemplate,
+      cell: (info) => {
+        const urlTemplate = info.getValue() as string
+        if (!urlTemplate) return null
+        const imageUrl = urlTemplate.replace('{width}x{height}', '100x60')
+        return (
+          <img
+            src={imageUrl}
+            alt="Vehicle"
+            className="h-8 w-20 object-cover rounded"
+          />
+        )
+      },
       enableSorting: false
     },
     {
@@ -65,15 +70,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       header: "Year",
       accessorKey: "year"
     },
-    {
-      header: "Color",
-      accessorFn: (row: Vehicle) => row.details?.color,
-      cell: (info) => {
-        const color = info.getValue()
-        if (!color) return null
-        return <ColorCircle color={color} />
-      }
-    },
+ 
     {
       header: "Est. Monthly Revenue",
       accessorFn: (row: Vehicle) => row.dailyPricing || [],
@@ -110,7 +107,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       cell: (info) => {
         const value = info.getValue() as number | undefined
         if (!value) return '-'
-        return `$${value.toLocaleString()}`
+        return `$${value.toFixed(0).toLocaleString()}`
       }
     },
     {
@@ -141,7 +138,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         return (
           <div className="flex items-center">
             <span className="mr-1">{rating.toFixed(1)}</span>
-            <span className="text-yellow-400">★</span>
+            <span style={{color:"#593BFB"}}>★</span>
           </div>
         )
       }
@@ -240,6 +237,15 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
             {isAutomatic ? 'Auto' : 'Manual'}
           </Badge>
         )
+      }
+    },
+    {
+      header: "Color",
+      accessorFn: (row: Vehicle) => row.details?.color,
+      cell: (info) => {
+        const color = info.getValue()
+        if (!color) return null
+        return <ColorCircle color={color} />
       }
     },
     {

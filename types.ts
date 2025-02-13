@@ -119,7 +119,7 @@ export interface Vehicle {
   completedTrips: number
   hostId: number
   images: {
-    originalImageUrl: string
+    resizeableUrlTemplate: string
   }[]
   isAllStarHost: boolean
   isNewListing: boolean
