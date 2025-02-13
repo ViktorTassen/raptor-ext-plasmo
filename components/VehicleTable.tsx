@@ -32,13 +32,16 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
   const [sorting, setSorting] = useState<any[]>([])
 
   const columns: ColumnDef<Vehicle>[] = useMemo(() => [
-    {
+     {
       header: "Image",
       accessorFn: (row: Vehicle) => row.images[0]?.resizeableUrlTemplate,
       cell: (info) => {
         const urlTemplate = info.getValue() as string
+        console.log('urlTemplate', urlTemplate)
         if (!urlTemplate) return null
+       
         const imageUrl = urlTemplate.replace('{width}x{height}', '100x60')
+        console.log(imageUrl)
         return (
           <img
             src={imageUrl}

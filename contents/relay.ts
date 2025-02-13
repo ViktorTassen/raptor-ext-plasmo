@@ -17,7 +17,7 @@ window.addEventListener('vehicles', async (event: CustomEvent) => {
       completedTrips: v.completedTrips,
       hostId: v.hostId,
       images: v.images.map(img => ({
-        originalImageUrl: img.originalImageUrl
+        resizeableUrlTemplate: img.resizeableUrlTemplate
       })),
       isAllStarHost: v.isAllStarHost,
       isNewListing: v.isNewListing,
