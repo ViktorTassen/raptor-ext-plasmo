@@ -118,7 +118,8 @@ const Modal = ({ onClose }: ModalProps) => {
 
       // Enrich vehicles one by one
       for (let i = 0; i < unenrichedVehicles.length; i++) {
-        if (abortControllerRef.current.signal.aborted) {
+        // Check if enrichment was stopped
+        if (!abortControllerRef.current || abortControllerRef.current.signal.aborted) {
           console.log('[Raptor] Enrichment stopped by user')
           break
         }
@@ -146,7 +147,6 @@ const Modal = ({ onClose }: ModalProps) => {
       }
     } catch (error) {
       console.error("[Raptor] Error enriching vehicles:", error)
-      alert("Error enriching vehicles. Please try again.")
     } finally {
       abortControllerRef.current = null
       setEnrichProgress(prev => ({
@@ -157,7 +157,7 @@ const Modal = ({ onClose }: ModalProps) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-250 flex justify-start">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-25 flex justify-start">
       <div className="w-[95%] max-w-[95%] bg-white h-[calc(100vh)] shadow-xl 
         transform transition-transform duration-300 ease-in-out overflow-auto relative"
         onClick={(e) => e.stopPropagation()}>

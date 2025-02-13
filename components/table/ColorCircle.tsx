@@ -1,10 +1,4 @@
 import React from "react"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "~components/ui/tooltip"
 
 const colorMap: { [key: string]: string } = {
   Black: "#000000",
@@ -29,27 +23,18 @@ export function ColorCircle({ color }: ColorCircleProps) {
   const colorStyle = colorMap[capitalizedColor]
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger>
-          <div className="flex items-center gap-2">
-            {colorStyle ? (
-              <div
-                className="h-4 w-4 rounded-full border border-gray-900"
-                style={{
-                  background: normalizedColor === "Other" ? colorStyle : undefined,
-                  backgroundColor: normalizedColor !== "Other" ? colorStyle : undefined,
-                }}
-              />
-            ) : (
-              <span className="text-sm text-gray-600">{capitalizedColor}</span>
-            )}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{capitalizedColor}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <div className="flex items-center gap-2">
+      {colorStyle ? (
+        <div
+          className="h-4 w-4 rounded-full border border-gray-900"
+          style={{
+            background: normalizedColor === "Other" ? colorStyle : undefined,
+            backgroundColor: normalizedColor !== "Other" ? colorStyle : undefined,
+          }}
+        />
+      ) : (
+        <span className="text-sm text-gray-600">{capitalizedColor}</span>
+      )}
+    </div>
   )
 }

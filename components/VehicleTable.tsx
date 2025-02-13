@@ -17,12 +17,13 @@ import {
   TableRow,
 } from "~components/ui/table"
 import { Badge } from "~components/ui/badge"
-import { BadgeCell } from "~components/table/BadgeCell"
+import { BadgePopover } from "~components/table/BadgePopover"
 import { RevenueCell } from "~components/table/RevenueCell"
 import { InstantBookLocations } from "~components/table/InstantBookLocations"
 import { ColorCircle } from "./table/ColorCircle"
 import { calculateAverageMonthlyRevenue, calculatePreviousYearRevenue } from "~utils/revenue"
 import { getCurrencySymbol } from "~utils/currency"
+import { getVehicleTypeDisplay } from "~utils/vehicleTypes"
 
 interface VehicleTableProps {
   vehicles: Vehicle[]
@@ -37,11 +38,9 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       accessorFn: (row: Vehicle) => row.images[0]?.resizeableUrlTemplate,
       cell: (info) => {
         const urlTemplate = info.getValue() as string
-        console.log('urlTemplate', urlTemplate)
         if (!urlTemplate) return null
        
         const imageUrl = urlTemplate.replace('{width}x{height}', '100x60')
-        console.log(imageUrl)
         return (
           <img
             src={imageUrl}
@@ -54,7 +53,8 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
     },
     {
       header: "Type",
-      accessorKey: "type"
+      accessorKey: "type",
+      cell: (info) => getVehicleTypeDisplay(info.getValue() as string)
     },
     {
       header: "Make",
@@ -214,20 +214,26 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       cell: (info) => {
         const locations = info.getValue() as AirportDeliveryLocation[] | undefined
         if (!locations?.length) return null
-        return <BadgeCell badges={locations.map((loc, index) => ({
-          id: index,
-          label: `${loc.location.code}: ${getCurrencySymbol(loc.feeWithCurrency.currencyCode)}${loc.feeWithCurrency.amount}`,
-          value: loc.location.code
-        }))} />
+        return (
+          <BadgePopover 
+            badges={locations.map((loc, index) => ({
+              id: index,
+              label: `${loc.location.code}: ${getCurrencySymbol(loc.feeWithCurrency.currencyCode)}${loc.feeWithCurrency.amount}`
+            }))}
+          />
+        )
       }
     },
     {
-      header: "City",
-      accessorFn: (row: Vehicle) => row.location.city
-    },
-    {
-      header: "State",
-      accessorFn: (row: Vehicle) => row.location.state
+      header: "City, State",
+      accessorFn: (row: Vehicle) => ({
+        city: row.location.city,
+        state: row.location.state
+      }),
+      cell: (info) => {
+        const { city, state } = info.getValue() as { city: string, state: string }
+        return city && state ? `${city}, ${state}` : city || state || '-'
+      }
     },
     {
       header: "Transmission",
@@ -257,7 +263,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       cell: (info) => {
         const badges = info.getValue()
         if (!Array.isArray(badges) || badges.length === 0) return null
-        return <BadgeCell 
+        return <BadgePopover 
           badges={badges.map(badge => ({
             id: badge.id,
             label: badge.label,
@@ -272,7 +278,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       cell: (info) => {
         const extras = info.getValue()
         if (!Array.isArray(extras) || extras.length === 0) return null
-        return <BadgeCell 
+        return <BadgePopover 
           badges={extras.map((extra, index) => ({
             id: index,
             label: extra.extraType.label,

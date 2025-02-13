@@ -1,11 +1,5 @@
 import React from "react"
 import { Plane, Home, MapPin, Building2 } from "lucide-react"
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "~components/ui/tooltip"
 
 interface InstantBookLocationsProps {
   preferences: {
@@ -44,18 +38,9 @@ export function InstantBookLocations({ preferences }: InstantBookLocationsProps)
 
   return (
     <div className="flex items-center gap-2">
-      <TooltipProvider>
-        {locations.map((location, index) => (
-          <Tooltip key={index}>
-            <TooltipTrigger>
-              <location.icon className="h-4 w-4 text-gray-600" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{location.label}</p>
-            </TooltipContent>
-          </Tooltip>
-        ))}
-      </TooltipProvider>
+      {locations.map((location, index) => (
+        <location.icon key={index} className="h-4 w-4 text-gray-600" />
+      ))}
     </div>
   )
 }
