@@ -1,13 +1,24 @@
 import React, { useMemo } from "react"
 import type { ICellRendererParams } from "ag-grid-community"
 import { AgCharts } from "ag-charts-react"
-import type { AgBarSeriesOptions, AgCartesianChartOptions } from "ag-charts-community"
+import type { AgBarSeriesOptions, AgBarSeriesTooltipRendererParams, AgCartesianChartOptions } from "ag-charts-community"
 import type { DailyPricing } from "~types"
 import { calculateMonthlyRevenue } from "~utils/revenue"
 
 interface RevenueCellProps extends ICellRendererParams {
   value: DailyPricing[]
 }
+
+
+function renderer(params: AgBarSeriesTooltipRendererParams) {
+  return `
+    <div class="bg-white text-black shadow-lg rounded-lg p-2 text-xs">
+      <div class="text-gray-600">${params.datum.fullMonth} ${params.datum.year}</div>
+      <div class="text-md font-bold">$${params.datum[params.yKey].toFixed(0)}</div>
+    </div>
+  `;
+}
+
 
 export const RevenueCell = React.memo(function RevenueCell(props: RevenueCellProps) {
   const data = useMemo(() => calculateMonthlyRevenue(props.value), [props.value])
@@ -17,11 +28,12 @@ export const RevenueCell = React.memo(function RevenueCell(props: RevenueCellPro
     tooltip: {
       position: {
         type: 'pointer',
-        yOffset: 80,
+        yOffset: 70,
     },
     },
     series: [{
       type: "bar",
+      tooltip: { renderer: renderer },
       xKey: "name",
       yKey: "total",
       fill: "#593BFB",
@@ -41,14 +53,12 @@ export const RevenueCell = React.memo(function RevenueCell(props: RevenueCellPro
         label: { enabled: false }
       }
     ],
-    padding: { top: 2, right: 2, bottom: 2, left: 2 },
+    padding: { top: 1, right: 1, bottom: 1, left: 1 },
     legend: { enabled: false },
     background: { fill: "transparent" },
-    width: 240,
-    height: 40
   }), [data])
 
   return (
-      <AgCharts options={options} />
+      <AgCharts options={options}  style={{ width: "200px", height: "40px" }} />
   )
 })

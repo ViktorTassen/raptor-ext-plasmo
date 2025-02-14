@@ -4,6 +4,7 @@ import type { Vehicle } from "~types"
 import { getColumnDefs } from "./table/columns"
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community"
 import { AgGridReact } from "ag-grid-react"
+import { themeQuartz } from 'ag-grid-community';
 
 ModuleRegistry.registerModules([AllCommunityModule])
 
@@ -29,6 +30,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
   return (
     <div className="w-full" style={{ height: 'calc(100vh - 160px)' }}>
       <AgGridReact
+        theme={themeQuartz}
         rowData={vehicles}
         columnDefs={getColumnDefs()}
         defaultColDef={defaultColDef}
