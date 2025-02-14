@@ -1,10 +1,15 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
+
 import { Storage } from "@plasmohq/storage"
-import { useStorage } from "@plasmohq/storage/hook"
-import type { SortingState, VisibilityState } from "@tanstack/react-table"
 import type { Vehicle } from "~types"
-import { DataTable } from "./table/DataTable"
-import { columns } from "./table/columns"
+import { getColumnDefs } from "./table/columns"
+import type { ColDef } from "ag-grid-community";
+import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
+import { AgGridReact } from "ag-grid-react";
+
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+
 
 const storage = new Storage({ area: "local" })
 
@@ -13,41 +18,34 @@ interface VehicleTableProps {
 }
 
 const VehicleTable = ({ vehicles }: VehicleTableProps) => {
-  const [sorting, setSorting] = useState<SortingState>([])
-  
-  // Initialize with all columns visible by default
-  const defaultColumnVisibility = columns.reduce((acc, column) => {
-    acc[column.id] = true
-    return acc
-  }, {} as VisibilityState)
-  
-  const [columnVisibility, setColumnVisibility] = useStorage<VisibilityState>({
-    key: "tableColumnVisibility",
-    instance: storage
-  })
-
-  // Initialize storage with default values if empty
-  useEffect(() => {
-    const initializeStorage = async () => {
-      const currentVisibility = await storage.get("tableColumnVisibility")
-      if (!currentVisibility) {
-        await storage.set("tableColumnVisibility", defaultColumnVisibility)
-        setColumnVisibility(defaultColumnVisibility)
-      }
-    }
-
-    initializeStorage()
-  }, [])
+  const defaultColDef = useMemo(() => ({
+    sortable: true,
+    resizable: true,
+    filter: true,
+    flex: 1,
+    minWidth: 100,
+    autoHeight: true,
+    suppressMenu: false
+  }), [])
 
   return (
-    <DataTable
-      data={vehicles}
-      columns={columns}
-      sorting={sorting}
-      onSortingChange={setSorting}
-      columnVisibility={columnVisibility || defaultColumnVisibility}
-      onColumnVisibilityChange={setColumnVisibility}
-    />
+    <div className="w-full" style={{ height: 'calc(100vh - 200px)' }}>
+      <AgGridReact
+        rowData={vehicles}
+        columnDefs={getColumnDefs()}
+        defaultColDef={defaultColDef}
+        enableCellTextSelection={true}
+        animateRows={true}
+        suppressMenuHide={true}
+        tooltipShowDelay={0}
+        tooltipHideDelay={2000}
+        rowHeight={42}
+        headerHeight={40}
+        suppressMovableColumns={false}
+        suppressColumnMoveAnimation={true}
+        suppressDragLeaveHidesColumns={true}
+      />
+    </div>
   )
 }
 

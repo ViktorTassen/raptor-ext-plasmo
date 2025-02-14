@@ -1,4 +1,4 @@
-import { type ColumnDef } from "@tanstack/react-table"
+import { type ColDef } from "ag-grid-community"
 import { Badge } from "~components/ui/badge"
 import { BadgePopover } from "~components/table/BadgePopover"
 import { RevenueCell } from "~components/table/RevenueCell"
@@ -9,15 +9,13 @@ import { getCurrencySymbol } from "~utils/currency"
 import { getVehicleTypeDisplay } from "~utils/vehicleTypes"
 import type { Vehicle, VehicleOwner, Distance, ExcessFee, AirportDeliveryLocation } from "~types"
 
-export const columns: ColumnDef<Vehicle>[] = [
+export const getColumnDefs = (): ColDef[] => [
   {
-    id: "image",
-    header: "Image",
-    accessorFn: (row: Vehicle) => row.images[0]?.resizeableUrlTemplate,
-    cell: (info) => {
-      const urlTemplate = info.getValue() as string
+    field: "images",
+    headerName: "Image",
+    cellRenderer: (params) => {
+      const urlTemplate = params.data.images[0]?.resizeableUrlTemplate
       if (!urlTemplate) return null
-     
       const imageUrl = urlTemplate.replace('{width}x{height}', '100x60')
       return (
         <img
@@ -27,83 +25,73 @@ export const columns: ColumnDef<Vehicle>[] = [
         />
       )
     },
-    enableSorting: false
+    sortable: false,
+    width: 120
   },
   {
-    id: "type",
-    header: "Type",
-    accessorKey: "type",
-    cell: (info) => getVehicleTypeDisplay(info.getValue() as string)
+    field: "type",
+    headerName: "Type",
+    valueFormatter: (params) => getVehicleTypeDisplay(params.value)
   },
   {
-    id: "make",
-    header: "Make",
-    accessorKey: "make"
+    field: "make",
+    headerName: "Make"
   },
   {
-    id: "model",
-    header: "Model",
-    accessorKey: "model"
+    field: "model",
+    headerName: "Model"
   },
   {
-    id: "trim",
-    header: "Trim",
-    accessorFn: (row: Vehicle) => row.details?.vehicle?.trim,
-    cell: (info) => info.getValue() || '-'
+    field: "details.vehicle.trim",
+    headerName: "Trim",
+    valueFormatter: (params) => params.value || '-'
   },
   {
-    id: "year",
-    header: "Year",
-    accessorKey: "year"
+    field: "year",
+    headerName: "Year"
   },
   {
-    id: "monthlyRevenue",
-    header: "Est. Monthly Revenue",
-    accessorFn: (row: Vehicle) => row.dailyPricing || [],
-    cell: (info) => {
-      const dailyPricing = info.getValue() as Vehicle["dailyPricing"]
-      return <RevenueCell dailyPricing={dailyPricing} />
+    field: "dailyPricing",
+    headerName: "Est. Monthly Revenue",
+    cellRenderer: RevenueCell,
+    width: 220,
+    sortable: false,
+    cellStyle: { 
+      display: 'flex',
+      alignItems: 'center',
+      padding: '5px'
     }
   },
   {
-    id: "avgMonthly",
-    header: "Avg Monthly",
-    accessorFn: (row: Vehicle) => ({
-      amount: !row.dailyPricing ? 0 : calculateAverageMonthlyRevenue(row.dailyPricing),
-      currency: row.avgDailyPrice?.currency || 'USD'
-    }),
-    cell: (info) => {
-      const { amount, currency } = info.getValue() as { amount: number, currency: string }
+    headerName: "Avg Monthly",
+    valueGetter: (params) => {
+      const dailyPricing = params.data.dailyPricing
+      const amount = !dailyPricing ? 0 : calculateAverageMonthlyRevenue(dailyPricing)
+      const currency = params.data.avgDailyPrice?.currency || 'USD'
       return `${getCurrencySymbol(currency)}${amount.toLocaleString()}`
     }
   },
   {
-    id: "prevYear",
-    header: "Prev Year",
-    accessorFn: (row: Vehicle) => ({
-      amount: !row.dailyPricing ? 0 : calculatePreviousYearRevenue(row.dailyPricing),
-      currency: row.avgDailyPrice?.currency || 'USD'
-    }),
-    cell: (info) => {
-      const { amount, currency } = info.getValue() as { amount: number, currency: string }
+    headerName: "Prev Year",
+    valueGetter: (params) => {
+      const dailyPricing = params.data.dailyPricing
+      const amount = !dailyPricing ? 0 : calculatePreviousYearRevenue(dailyPricing)
+      const currency = params.data.avgDailyPrice?.currency || 'USD'
       return `${getCurrencySymbol(currency)}${amount.toLocaleString()}`
     }
   },
   {
-    id: "marketValue",
-    header: "Avg Market Value",
-    accessorFn: (row: Vehicle) => row.details?.marketValue?.below,
-    cell: (info) => {
-      const value = info.getValue() as number | undefined
-      if (!value) return '-'
-      return `$${value.toFixed(0).toLocaleString()}`
+    field: "details.marketValue.below",
+    headerName: "Avg Market Value",
+    valueFormatter: (params) => {
+      if (!params.value) return '-'
+      return `$${params.value.toFixed(0).toLocaleString()}`
     }
   },
   {
-    id: "daysOnTuro",
-    header: "Days on Turo",
-    accessorFn: (row: Vehicle) => {
-      const listingDate = row.details?.vehicle?.listingCreatedTime
+    headerName: "Days on Turo",
+    valueGetter: (params) => {
+      const listingDate = params.data.details?.vehicle?.listingCreatedTime
       if (!listingDate) return 0
       const created = new Date(listingDate)
       const today = new Date()
@@ -112,21 +100,18 @@ export const columns: ColumnDef<Vehicle>[] = [
     }
   },
   {
-    id: "trips",
-    header: "Trips",
-    accessorKey: "completedTrips"
+    field: "completedTrips",
+    headerName: "Trips"
   },
   {
-    id: "favorites",
-    header: "Favs",
-    accessorFn: (row: Vehicle) => row.details?.numberOfFavorites
+    field: "details.numberOfFavorites",
+    headerName: "Favs"
   },
   {
-    id: "rating",
-    header: "Rating",
-    accessorKey: "rating",
-    cell: (info) => {
-      const rating = info.getValue() as number
+    field: "rating",
+    headerName: "Rating",
+    cellRenderer: (params) => {
+      const rating = params.value
       if (rating == null) return null
       return (
         <div className="flex items-center">
@@ -137,26 +122,22 @@ export const columns: ColumnDef<Vehicle>[] = [
     }
   },
   {
-    id: "reviews",
-    header: "Reviews",
-    accessorFn: (row: Vehicle) => row.details?.numberOfReviews
+    field: "details.numberOfReviews",
+    headerName: "Reviews"
   },
   {
-    id: "instantBook",
-    header: "Instant Book",
-    accessorFn: (row: Vehicle) => row.details?.instantBookLocationPreferences,
-    cell: (info) => {
-      const prefs = info.getValue() as Vehicle["details"]["instantBookLocationPreferences"]
-      if (!prefs) return null
-      return <InstantBookLocations preferences={prefs} />
+    field: "details.instantBookLocationPreferences",
+    headerName: "Instant Book",
+    cellRenderer: (params) => {
+      if (!params.value) return null
+      return <InstantBookLocations preferences={params.value} />
     }
   },
   {
-    id: "host",
-    header: "Host",
-    accessorFn: (row: Vehicle) => row.details?.owner,
-    cell: (info) => {
-      const owner = info.getValue() as VehicleOwner | undefined
+    field: "details.owner",
+    headerName: "Host",
+    cellRenderer: (params) => {
+      const owner = params.value as VehicleOwner | undefined
       if (!owner) return null
       return (
         <div className="flex items-center gap-2">
@@ -171,26 +152,22 @@ export const columns: ColumnDef<Vehicle>[] = [
     }
   },
   {
-    id: "protectionPlan",
-    header: "P Plan",
-    accessorFn: (row: Vehicle) => row.details?.hostTakeRate,
-    cell: (info) => {
-      const rate = info.getValue() as number | undefined
-      if (rate == null) return null
-      return `${(rate * 100).toFixed(0)}%`
+    field: "details.hostTakeRate",
+    headerName: "P Plan",
+    valueFormatter: (params) => {
+      if (params.value == null) return null
+      return `${(params.value * 100).toFixed(0)}%`
     }
   },
   {
-    id: "hostId",
-    header: "Host ID",
-    accessorKey: "hostId"
+    field: "hostId",
+    headerName: "Host ID"
   },
   {
-    id: "hostStatus",
-    header: "Host Status",
-    accessorFn: (row: Vehicle) => row.details?.owner,
-    cell: (info) => {
-      const owner = info.getValue() as VehicleOwner | undefined
+    field: "details.owner",
+    headerName: "Host Status",
+    cellRenderer: (params) => {
+      const owner = params.value as VehicleOwner | undefined
       if (!owner) return null
       return (
         <div className="flex flex-wrap gap-1">
@@ -205,11 +182,10 @@ export const columns: ColumnDef<Vehicle>[] = [
     }
   },
   {
-    id: "airportDelivery",
-    header: "Airport Delivery",
-    accessorFn: (row: Vehicle) => row.details?.rate?.airportDeliveryLocationsAndFees,
-    cell: (info) => {
-      const locations = info.getValue() as AirportDeliveryLocation[] | undefined
+    field: "details.rate.airportDeliveryLocationsAndFees",
+    headerName: "Airport Delivery",
+    cellRenderer: (params) => {
+      const locations = params.value as AirportDeliveryLocation[] | undefined
       if (!locations?.length) return null
       return (
         <BadgePopover 
@@ -222,23 +198,18 @@ export const columns: ColumnDef<Vehicle>[] = [
     }
   },
   {
-    id: "location",
-    header: "City, State",
-    accessorFn: (row: Vehicle) => ({
-      city: row.location.city,
-      state: row.location.state
-    }),
-    cell: (info) => {
-      const { city, state } = info.getValue() as { city: string, state: string }
+    headerName: "City, State",
+    valueGetter: (params) => {
+      const city = params.data.location.city
+      const state = params.data.location.state
       return city && state ? `${city}, ${state}` : city || state || '-'
     }
   },
   {
-    id: "transmission",
-    header: "Transmission",
-    accessorFn: (row: Vehicle) => row.details?.vehicle?.automaticTransmission,
-    cell: (info) => {
-      const isAutomatic = info.getValue() as boolean | undefined
+    field: "details.vehicle.automaticTransmission",
+    headerName: "Transmission",
+    cellRenderer: (params) => {
+      const isAutomatic = params.value
       if (isAutomatic === undefined) return null
       return (
         <Badge variant={isAutomatic ? "success" : "default"}>
@@ -248,21 +219,18 @@ export const columns: ColumnDef<Vehicle>[] = [
     }
   },
   {
-    id: "color",
-    header: "Color",
-    accessorFn: (row: Vehicle) => row.details?.color,
-    cell: (info) => {
-      const color = info.getValue()
-      if (!color) return null
-      return <ColorCircle color={color} />
+    field: "details.color",
+    headerName: "Color",
+    cellRenderer: (params) => {
+      if (!params.value) return null
+      return <ColorCircle color={params.value} />
     }
   },
   {
-    id: "badges",
-    header: "Badges",
-    accessorFn: (row: Vehicle) => row.details?.badges,
-    cell: (info) => {
-      const badges = info.getValue()
+    field: "details.badges",
+    headerName: "Badges",
+    cellRenderer: (params) => {
+      const badges = params.value
       if (!Array.isArray(badges) || badges.length === 0) return null
       return <BadgePopover 
         badges={badges.map(badge => ({
@@ -274,11 +242,10 @@ export const columns: ColumnDef<Vehicle>[] = [
     }
   },
   {
-    id: "extras",
-    header: "Extras",
-    accessorFn: (row: Vehicle) => row.details?.extras.extras,
-    cell: (info) => {
-      const extras = info.getValue()
+    field: "details.extras.extras",
+    headerName: "Extras",
+    cellRenderer: (params) => {
+      const extras = params.value
       if (!Array.isArray(extras) || extras.length === 0) return null
       return <BadgePopover 
         badges={extras.map((extra, index) => ({
@@ -290,73 +257,63 @@ export const columns: ColumnDef<Vehicle>[] = [
     }
   },
   {
-    id: "dailyDistance",
-    header: "Daily Distance",
-    accessorFn: (row: Vehicle) => row.details?.rate?.dailyDistance,
-    cell: (info) => {
-      const distance = info.getValue() as Distance | undefined
+    field: "details.rate.dailyDistance",
+    headerName: "Daily Distance",
+    valueFormatter: (params) => {
+      const distance = params.value as Distance | undefined
       if (!distance) return null
       return `${distance.scalar} ${distance.unit.toLowerCase()}`
     }
   },
   {
-    id: "weeklyDistance",
-    header: "Weekly Distance",
-    accessorFn: (row: Vehicle) => row.details?.rate?.weeklyDistance,
-    cell: (info) => {
-      const distance = info.getValue() as Distance | undefined
+    field: "details.rate.weeklyDistance",
+    headerName: "Weekly Distance",
+    valueFormatter: (params) => {
+      const distance = params.value as Distance | undefined
       if (!distance) return null
       return `${distance.scalar} ${distance.unit.toLowerCase()}`
     }
   },
   {
-    id: "monthlyDistance",
-    header: "Monthly Distance",
-    accessorFn: (row: Vehicle) => row.details?.rate?.monthlyDistance,
-    cell: (info) => {
-      const distance = info.getValue() as Distance | undefined
+    field: "details.rate.monthlyDistance",
+    headerName: "Monthly Distance",
+    valueFormatter: (params) => {
+      const distance = params.value as Distance | undefined
       if (!distance) return null
       return `${distance.scalar} ${distance.unit.toLowerCase()}`
     }
   },
   {
-    id: "excessFee",
-    header: "Excess Fee",
-    accessorFn: (row: Vehicle) => row.details?.rate?.excessFeePerDistance,
-    cell: (info) => {
-      const fee = info.getValue() as ExcessFee | undefined
+    field: "details.rate.excessFeePerDistance",
+    headerName: "Excess Fee",
+    valueFormatter: (params) => {
+      const fee = params.value as ExcessFee | undefined
       if (!fee) return null
       return `${getCurrencySymbol(fee.currencyCode)}${fee.amount}`
     }
   },
   {
-    id: "weeklyDiscount",
-    header: "Weekly Discount",
-    accessorFn: (row: Vehicle) => row.details?.rate?.weeklyDiscountPercentage,
-    cell: (info) => {
-      const discount = info.getValue() as number | undefined
-      if (discount == null) return null
-      return `${discount}%`
+    field: "details.rate.weeklyDiscountPercentage",
+    headerName: "Weekly Discount",
+    valueFormatter: (params) => {
+      if (params.value == null) return null
+      return `${params.value}%`
     }
   },
   {
-    id: "monthlyDiscount",
-    header: "Monthly Discount",
-    accessorFn: (row: Vehicle) => row.details?.rate?.monthlyDiscountPercentage,
-    cell: (info) => {
-      const discount = info.getValue() as number | undefined
-      if (discount == null) return null
-      return `${discount}%`
+    field: "details.rate.monthlyDiscountPercentage",
+    headerName: "Monthly Discount",
+    valueFormatter: (params) => {
+      if (params.value == null) return null
+      return `${params.value}%`
     }
   },
   {
-    id: "listed",
-    header: "Listed",
-    accessorFn: (row: Vehicle) => row.details?.vehicle?.listingCreatedTime,
-    cell: (info) => {
-      const timestamp = info.getValue() as string | undefined
-      if (!timestamp) return null
-      const date = new Date(timestamp)
+    field: "details.vehicle.listingCreatedTime",
+    headerName: "Listed",
+    valueFormatter: (params) => {
+      if (!params.value) return null
+      const date = new Date(params.value)
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -365,20 +322,17 @@ export const columns: ColumnDef<Vehicle>[] = [
     }
   },
   {
-    id: "vehicleId",
-    header: "Vehicle ID",
-    accessorKey: "id"
+    field: "id",
+    headerName: "Vehicle ID"
   },
   {
-    id: "listingUrl",
-    header: "Listing URL",
-    accessorFn: (row: Vehicle) => row.details?.vehicle?.url,
-    cell: (info) => {
-      const url = info.getValue() as string | undefined
-      if (!url) return null
+    field: "details.vehicle.url",
+    headerName: "Listing URL",
+    cellRenderer: (params) => {
+      if (!params.value) return null
       return (
         <a
-          href={url}
+          href={params.value}
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-600 hover:text-blue-800 hover:underline">

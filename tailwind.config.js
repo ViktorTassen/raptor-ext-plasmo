@@ -6,6 +6,7 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: ["RLBasisGrotesque", "sans-serif"],
+        'ag-grid': ['agGridAlpine', 'sans-serif']
       },
       
       colors: {

@@ -1,66 +1,36 @@
 import React, { useMemo } from "react"
-import {
-  Bar,
-  BarChart,
-  ResponsiveContainer,
-  XAxis,
-  Tooltip
-} from "recharts"
+import type { ICellRendererParams } from "ag-grid-community"
 import type { DailyPricing } from "~types"
 import { calculateMonthlyRevenue } from "~utils/revenue"
 
-interface RevenueCellProps {
-  dailyPricing: DailyPricing[]
+interface RevenueCellProps extends ICellRendererParams {
+  value: DailyPricing[]
 }
 
-export const RevenueCell = React.memo(function RevenueCell({ dailyPricing }: RevenueCellProps) {
-  const data = useMemo(() => calculateMonthlyRevenue(dailyPricing), [dailyPricing])
+export const RevenueCell = React.memo(function RevenueCell(props: RevenueCellProps) {
+  const data = useMemo(() => calculateMonthlyRevenue(props.value), [props.value])
 
+  // Create mini bar chart using divs
   return (
-    <div className="w-[200px]">
-      <div className="h-10">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-            <XAxis
-              interval={"preserveStartEnd"}
-              dataKey="name"
-              tickLine={false}
-              axisLine={true}
-              fontSize={0}
-              height={2}
-            />
-            <Tooltip
-              wrapperStyle={{zIndex: 1000}}
-              cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
-              content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  const data = payload[0].payload
-                  return (
-                    <div className="rounded-lg border bg-white p-2 shadow-sm">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-[0.70rem]">
-                          {data.fullMonth} {data.year}
-                        </span>
-                        <span className="font-bold">
-                          ${payload[0].value?.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                }
-                return null
-              }}
-            />
-            <Bar
-              dataKey="total"
-              // fill="currentColor"
-              fill="#593BFB"
-              radius={[0, 0, 0, 0]}
-              // className="fill-primary"
-            />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+    <div className="flex items-end h-10 gap-[2px] w-[200px]">
+      {data.map((month, index) => {
+        const maxValue = Math.max(...data.map(d => d.total))
+        const height = month.total ? (month.total / maxValue) * 100 : 0
+        
+        return (
+          <div
+            key={index}
+            className="flex-1 bg-[#593BFB] hover:opacity-80 transition-opacity cursor-pointer relative group"
+            style={{ height: `${height}%` }}
+            title={`${month.fullMonth} ${month.year}: $${month.total.toLocaleString()}`}>
+            <div className="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 p-2 bg-white rounded shadow-lg text-sm whitespace-nowrap z-10">
+              {month.fullMonth} {month.year}
+              <br />
+              ${month.total.toLocaleString()}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 })

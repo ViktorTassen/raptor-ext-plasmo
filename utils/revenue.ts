@@ -1,6 +1,19 @@
 import type { DailyPricing } from "~types"
 
-export const calculateMonthlyRevenue = (pricing: DailyPricing[]) => {
+export const calculateMonthlyRevenue = (pricing: DailyPricing[] | undefined) => {
+  if (!Array.isArray(pricing)) {
+    return Array(12).fill(0).map((_, i) => {
+      const d = new Date()
+      d.setMonth(d.getMonth() - i)
+      return {
+        name: d.toLocaleString('en-US', { month: 'short' }),
+        fullMonth: d.toLocaleString('en-US', { month: 'long' }),
+        year: d.getFullYear(),
+        total: 0
+      }
+    }).reverse()
+  }
+
   const today = new Date()
   const months: { [key: string]: number } = {}
   
@@ -51,7 +64,9 @@ export const calculateMonthlyRevenue = (pricing: DailyPricing[]) => {
     .reverse()
 }
 
-export const calculateAverageMonthlyRevenue = (pricing: DailyPricing[]) => {
+export const calculateAverageMonthlyRevenue = (pricing: DailyPricing[] | undefined) => {
+  if (!Array.isArray(pricing)) return 0
+  
   const data = calculateMonthlyRevenue(pricing)
   const filteredData = data.filter(month => month.total !== 0)
   return filteredData.length > 0 
@@ -59,7 +74,9 @@ export const calculateAverageMonthlyRevenue = (pricing: DailyPricing[]) => {
     : 0
 }
 
-export const calculatePreviousYearRevenue = (pricing: DailyPricing[]) => {
+export const calculatePreviousYearRevenue = (pricing: DailyPricing[] | undefined) => {
+  if (!Array.isArray(pricing)) return 0
+  
   const data = calculateMonthlyRevenue(pricing)
   const lastYear = new Date().getFullYear() - 1
   return data
