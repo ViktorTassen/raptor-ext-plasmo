@@ -2,33 +2,35 @@ import React from "react"
 import { Plane, Home, MapPin, Building2 } from "lucide-react"
 
 interface InstantBookLocationsProps {
-  preferences: {
-    airportLocationEnabled: boolean
-    customLocationEnabled: boolean
-    homeLocationEnabled: boolean
-    poiLocationEnabled: boolean
+  preferences?: {
+    airportLocationEnabled?: boolean
+    customLocationEnabled?: boolean
+    homeLocationEnabled?: boolean
+    poiLocationEnabled?: boolean
   }
 }
 
 export function InstantBookLocations({ preferences }: InstantBookLocationsProps) {
+  if (!preferences) return null
+
   const locations = [
     {
-      enabled: preferences.airportLocationEnabled,
+      enabled: preferences.airportLocationEnabled || false,
       label: "Airport",
       icon: Plane
     },
     {
-      enabled: preferences.customLocationEnabled,
+      enabled: preferences.customLocationEnabled || false,
       label: "Custom Location",
       icon: MapPin
     },
     {
-      enabled: preferences.homeLocationEnabled,
+      enabled: preferences.homeLocationEnabled || false,
       label: "Home Location",
       icon: Home
     },
     {
-      enabled: preferences.poiLocationEnabled,
+      enabled: preferences.poiLocationEnabled || false,
       label: "Points of Interest",
       icon: Building2
     }

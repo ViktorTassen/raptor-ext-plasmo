@@ -32,3 +32,11 @@ body {
   font-family: RLBasisGrotesque, sans-serif;
 }
 
+
+.ag-row .ag-cell {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -3,7 +3,7 @@ import { Badge } from "~components/ui/badge"
 import { RevenueCell } from "~components/table/RevenueCell"
 import { InstantBookLocations } from "~components/table/InstantBookLocations"
 import { ColorCircle } from "~components/table/ColorCircle"
-import { calculateAverageMonthlyRevenue, calculatePreviousYearRevenue } from "~utils/revenue"
+import { calculateAverageMonthlyRevenue, calculateMonthlyRevenue, calculatePreviousYearRevenue } from "~utils/revenue"
 import { getCurrencySymbol } from "~utils/currency"
 import { getVehicleTypeDisplay } from "~utils/vehicleTypes"
 import type { Distance, ExcessFee, Vehicle } from "~types"
@@ -63,13 +63,16 @@ export const getColumnDefs = (): ColDef[] => [
       maxNumConditions: 1
     },
   },
-  // {
-  //   field: "dailyPricing",
-  //   headerName: "Est. Monthly Revenue",
-  //   cellRenderer: RevenueCell,
-  //   width: 320,
-  //   sortable: false,
-  // },
+  {
+    field: "dailyPricing",
+    headerName: "Est. Monthly Revenue",
+    cellRenderer: RevenueCell,
+    width: 250,
+    valueFormatter: (params) => {
+      if (!params.value || !Array.isArray(params.value)) return "0";
+      return `$${calculateMonthlyRevenue(params.value).reduce((acc, item) => acc + item.total, 0).toFixed(2)}`;
+    }
+  },
   {
     field: "avgDailyPrice",
     headerName: "Avg Daily Price",
@@ -142,15 +145,16 @@ export const getColumnDefs = (): ColDef[] => [
   {
     field: "details.instantBookLocationPreferences",
     headerName: "Instant Book",
-    cellRenderer: InstantBookLocations,
     valueFormatter: (params) => {
-      if (!params.value) return ''
-      const prefs = params.value
-      return Object.entries(prefs)
-        .filter(([_, enabled]) => enabled)
-        .map(([key]) => key)
-        .join(', ')
-    }
+      if (params.value == null) return null
+    },
+    cellRenderer: (params) => {
+      if (!params.value) return null
+      console.log(params)
+      return (
+          <InstantBookLocations preferences={params.value} />
+      )
+    },
   },
   {
     field: "details.owner",
