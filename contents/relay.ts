@@ -13,7 +13,6 @@ window.addEventListener('vehicles', async (event: CustomEvent) => {
     // Transform the data to keep only required fields
     const vehicles: Vehicle[] = rawVehicles.map(v => ({
       id: v.id,
-      avgDailyPrice: v.avgDailyPrice,
       completedTrips: v.completedTrips,
       hostId: v.hostId,
       images: v.images.map(img => ({

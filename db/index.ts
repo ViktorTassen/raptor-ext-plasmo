@@ -26,6 +26,27 @@ export class RaptorDB extends Dexie {
     this.on('versionchange', () => console.log('[Raptor] Database version changed'))
     this.on('blocked', () => console.log('[Raptor] Database blocked'))
   }
+
+  // Helper method to ensure database is open
+  async ensureOpen() {
+    if (!this.isOpen()) {
+      await this.open()
+    }
+  }
+
+  // Helper method to initialize the database
+  async initialize() {
+    try {
+      await this.ensureOpen()
+      // Create initial tables if they don't exist
+      await this.vehicles.count() // This will create the table if it doesn't exist
+      await this.searchParams.count()
+      console.log('[Raptor] Database initialized successfully')
+    } catch (error) {
+      console.error('[Raptor] Error initializing database:', error)
+      throw error
+    }
+  }
 }
 
 // Only export the class, don't create instance here

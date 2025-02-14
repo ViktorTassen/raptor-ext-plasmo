@@ -31,13 +31,40 @@ chrome.webRequest.onBeforeRequest.addListener(
   { urls: ["*://*.turo.com/*"] }
 )
 
-
-
-
 // Initialize database in background script
 export const db = new RaptorDB()
 
-// Initialize the database
-db.open().catch(error => {
-  console.error('[Raptor] Failed to initialize database:', error)
+// Handle database initialization
+chrome.runtime.onInstalled.addListener(async (details) => {
+  if (details.reason === 'install') {
+    console.log('[Raptor] Extension installed, initializing database')
+    try {
+      await db.initialize()
+    } catch (error) {
+      console.error('[Raptor] Failed to initialize database on install:', error)
+    }
+  } else {
+    // For updates and other cases, just ensure the database is open
+    await db.ensureOpen().catch(error => {
+      console.error('[Raptor] Error ensuring database is open:', error)
+    })
+  }
 })
+
+// Keep database open during browser startup
+chrome.runtime.onStartup.addListener(async () => {
+  try {
+    await db.ensureOpen()
+  } catch (error) {
+    console.error('[Raptor] Error ensuring database is open on startup:', error)
+  }
+})
+
+// // Clean up on uninstall
+// chrome.runtime.setUninstallURL("", () => {
+//   db.delete().then(() => {
+//     console.log('[Raptor] Database deleted successfully')
+//   }).catch(error => {
+//     console.error('[Raptor] Error deleting database:', error)
+//   })
+// })

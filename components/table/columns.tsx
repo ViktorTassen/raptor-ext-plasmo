@@ -6,23 +6,24 @@ import { ColorCircle } from "~components/table/ColorCircle"
 import { calculateAverageMonthlyRevenue, calculatePreviousYearRevenue } from "~utils/revenue"
 import { getCurrencySymbol } from "~utils/currency"
 import { getVehicleTypeDisplay } from "~utils/vehicleTypes"
-import type { Distance, ExcessFee } from "~types"
+import type { Distance, ExcessFee, Vehicle } from "~types"
 
 export const getColumnDefs = (): ColDef[] => [
   {
     field: "images",
     headerName: "Image",
+    valueGetter: (params) => params.data.images?.[0]?.resizeableUrlTemplate || null,
     cellRenderer: (params) => {
-      const urlTemplate = params.data.images[0]?.resizeableUrlTemplate
-      if (!urlTemplate) return null
-      const imageUrl = urlTemplate.replace('{width}x{height}', '100x60')
+      const urlTemplate = params.value;
+      if (!urlTemplate) return null;
+      const imageUrl = urlTemplate.replace('{width}x{height}', '100x60');
       return (
         <img
           src={imageUrl}
           alt="Vehicle"
           className="h-8 w-20 object-cover rounded"
         />
-      )
+      );
     },
     sortable: false,
     resizable: false,
@@ -55,19 +56,27 @@ export const getColumnDefs = (): ColDef[] => [
   {
     field: "year",
     headerName: "Year",
-    filter: "agNumberColumnFilter", // Enables number filter
+    filter: "agNumberColumnFilter",
     filterParams: {
-      filterOptions: ["inRange"], // Enables Min-Max filter
+      filterOptions: ["inRange"],
       inRangeInclusive: true,
       maxNumConditions: 1
     },
   },
+  // {
+  //   field: "dailyPricing",
+  //   headerName: "Est. Monthly Revenue",
+  //   cellRenderer: RevenueCell,
+  //   width: 320,
+  //   sortable: false,
+  // },
   {
-    field: "dailyPricing",
-    headerName: "Est. Monthly Revenue",
-    cellRenderer: RevenueCell,
-    width: 320,
-    sortable: false,
+    field: "avgDailyPrice",
+    headerName: "Avg Daily Price",
+    valueFormatter: (params) => {
+      if (!params.value) return '-'
+      return `${getCurrencySymbol(params.value.currency)}${params.value.amount}`
+    }
   },
   {
     headerName: "Avg Monthly",
@@ -76,7 +85,8 @@ export const getColumnDefs = (): ColDef[] => [
       const amount = !dailyPricing ? 0 : calculateAverageMonthlyRevenue(dailyPricing)
       const currency = params.data.avgDailyPrice?.currency || 'USD'
       return `${getCurrencySymbol(currency)}${amount.toLocaleString()}`
-    }
+    },
+    valueFormatter: (params) => params.value // Ensure the value is formatted as a string
   },
   {
     headerName: "Prev Year",
@@ -85,7 +95,8 @@ export const getColumnDefs = (): ColDef[] => [
       const amount = !dailyPricing ? 0 : calculatePreviousYearRevenue(dailyPricing)
       const currency = params.data.avgDailyPrice?.currency || 'USD'
       return `${getCurrencySymbol(currency)}${amount.toLocaleString()}`
-    }
+    },
+    valueFormatter: (params) => params.value // Ensure the value is formatted as a string
   },
   {
     field: "details.marketValue.below",
@@ -104,7 +115,8 @@ export const getColumnDefs = (): ColDef[] => [
       const today = new Date()
       const diffTime = Math.abs(today.getTime() - created.getTime())
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    }
+    },
+    valueFormatter: (params) => params.value.toString() // Ensure the value is formatted as a string
   },
   {
     field: "completedTrips",
@@ -130,19 +142,21 @@ export const getColumnDefs = (): ColDef[] => [
   {
     field: "details.instantBookLocationPreferences",
     headerName: "Instant Book",
-    cellRenderer: (params) => {
-      if (!params.value) return null
-      return <InstantBookLocations preferences={params.value} />
+    cellRenderer: InstantBookLocations,
+    valueFormatter: (params) => {
+      if (!params.value) return ''
+      const prefs = params.value
+      return Object.entries(prefs)
+        .filter(([_, enabled]) => enabled)
+        .map(([key]) => key)
+        .join(', ')
     }
   },
   {
     field: "details.owner",
     headerName: "Host",
-    valueGetter: (params) => {
-      const owner = params.data?.details?.owner
-      if (!owner) return ''
-      return owner.name
-    }
+    valueGetter: (params) => params.data?.details?.owner?.name || '',
+    valueFormatter: (params) => params.value // Ensure the value is formatted as a string
   },
   {
     field: "details.hostTakeRate",
@@ -160,21 +174,21 @@ export const getColumnDefs = (): ColDef[] => [
     field: "details.owner",
     headerName: "Host Status",
     valueGetter: (params) => {
-      const owner = params.data?.details?.owner
-      if (!owner) return ''
-      const statuses = []
-      if (owner.allStarHost) statuses.push('⭐ All-Star')
-      if (owner.proHost) statuses.push('Pro')
-      return statuses.join(', ')
-    }
+      const owner = params.data?.details?.owner;
+      if (!owner) return '';
+      const statuses = [];
+      if (owner.allStarHost) statuses.push('⭐ All-Star');
+      if (owner.proHost) statuses.push('Pro');
+      return statuses.join(', ');
+    },
+    valueFormatter: (params) => params.value // Ensure the value is formatted as a string
   },
   {
     field: "details.rate.airportDeliveryLocationsAndFees",
     headerName: "Airport Delivery",
-    valueGetter: (params) => {
-      const locations = params.data?.details?.rate?.airportDeliveryLocationsAndFees
-      if (!locations?.length) return ''
-      return locations.map(loc => 
+    valueFormatter: (params) => {
+      if (!params.value?.length) return ''
+      return params.value.map((loc: any) => 
         `${loc.location.code}(${getCurrencySymbol(loc.feeWithCurrency.currencyCode)}${loc.feeWithCurrency.amount})`
       ).join(', ')
     }
@@ -182,40 +196,40 @@ export const getColumnDefs = (): ColDef[] => [
   {
     field: "details.extras.extras",
     headerName: "Extras",
-    valueGetter: (params) => {
-      const extras = params.data?.details?.extras?.extras
-      if (!extras?.length) return ''
-      return extras.map(extra => extra.extraType.label).join(', ')
+    valueFormatter: (params) => {
+      if (!params.value?.length) return ''
+      return params.value.map((extra: any) => extra.extraType.label).join(', ')
     }
   },
   {
     field: "details.badges",
     headerName: "Badges",
-    valueGetter: (params) => {
-      const badges = params.data?.details?.badges
-      if (!badges?.length) return ''
-      return badges.map(badge => badge.label).join(', ')
+    valueFormatter: (params) => {
+      if (!params.value?.length) return ''
+      return params.value.map((badge: any) => badge.label).join(', ')
     }
   },
   {
+    field: "location",
     headerName: "City, State",
     valueGetter: (params) => {
-      const city = params.data.location.city
-      const state = params.data.location.state
-      return city && state ? `${city}, ${state}` : city || state || '-'
-    }
+      const location = params.data.location
+      return location?.city && location?.state ? `${location.city}, ${location.state}` : location?.city || location?.state || '-'
+    },
+    valueFormatter: (params) => params.value // Ensure the value is formatted as a string
   },
   {
     field: "details.vehicle.automaticTransmission",
     headerName: "Transmission",
-    valueFormatter: (params) => {
+    cellRenderer: (params) => {
       if (params.value === undefined) return null
-      return params.value ? 'Auto' : 'Manual'
+      return params.value ? `Auto` : `Manual`
     }
   },
   {
     field: "details.color",
     headerName: "Color",
+    valueFormatter: (params) => params.value || '-',
     cellRenderer: (params) => {
       if (!params.value) return null
       return <ColorCircle color={params.value} />
@@ -304,6 +318,7 @@ export const getColumnDefs = (): ColDef[] => [
           View
         </a>
       )
-    }
+    },
+    valueFormatter: (params) => params.value // Ensure the value is formatted as a string
   }
 ]

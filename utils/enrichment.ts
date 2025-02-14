@@ -1,5 +1,5 @@
 import { Storage } from "@plasmohq/storage"
-import type { Vehicle, MarketValue, VehicleDetails } from "~types"
+import type { Vehicle, MarketValue, VehicleDetails, DailyPricing, VehiclePrice } from "~types"
 
 const storage = new Storage({ area: "local" })
 
@@ -41,6 +41,17 @@ const getDefaultDates = () => {
     startTime: "10:00",
     endDate: formatDate(endDate),
     endTime: "10:00"
+  }
+}
+
+const calculateAverageDailyPrice = (dailyPricing: DailyPricing[]): VehiclePrice => {
+  const busyDays = dailyPricing.filter(day => day.wholeDayUnavailable)
+  if (busyDays.length === 0) return { amount: 0, currency: "USD" }
+  
+  const totalPrice = busyDays.reduce((sum, day) => sum + day.price, 0)
+  return {
+    amount: Math.round(totalPrice / busyDays.length),
+    currency: "USD"
   }
 }
 
@@ -136,7 +147,7 @@ async function fetchVehicleDetails(vehicleId: number): Promise<VehicleDetails | 
         trim: data.vehicle?.trim,
         url: data.vehicle?.url
       },
-      marketValue: undefined // Initialize with undefined, will be set later if available
+      marketValue: undefined
     }
   } catch (error) {
     console.error(`Error fetching vehicle ${vehicleId} details:`, error)
@@ -206,10 +217,13 @@ export async function enrichVehicle(
     }
     
     if (details && dailyPricing) {
+      const avgDailyPrice = calculateAverageDailyPrice(dailyPricing)
+      
       return {
         ...vehicle,
         details,
         dailyPricing,
+        avgDailyPrice,
         isEnriched: true
       }
     }
