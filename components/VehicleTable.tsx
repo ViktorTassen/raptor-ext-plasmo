@@ -8,7 +8,6 @@ import { themeQuartz } from 'ag-grid-community';
 
 ModuleRegistry.registerModules([AllCommunityModule])
 
-
 interface VehicleTableProps {
   vehicles: Vehicle[]
 }
@@ -19,10 +18,13 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
     resizable: true,
     filter: 'agTextColumnFilter',
     filterParams: {
-      buttons: ['apply', 'reset'],
+      buttons: ['reset', 'apply'],
       closeOnApply: true
     },
     autoHeight: true,
+    // Enable auto-sizing for all columns
+    suppressSizeToFit: false,
+    flex: 1
   }), [])
 
   return (
@@ -42,6 +44,10 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         suppressMovableColumns={false}
         suppressColumnMoveAnimation={false}
         suppressDragLeaveHidesColumns={true}
+        // Auto-size all columns on first data load
+        onFirstDataRendered={(params) => {
+          params.api.sizeColumnsToFit()
+        }}
       />
     </div>
   )
