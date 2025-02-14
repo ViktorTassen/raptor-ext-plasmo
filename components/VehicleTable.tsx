@@ -22,19 +22,17 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
       buttons: ['apply', 'reset'],
       closeOnApply: true
     },
-    flex: 1,
-    minWidth: 100,
     autoHeight: true,
     suppressMenu: false
   }), [])
 
   return (
-    <div className="w-full" style={{ height: 'calc(100vh - 200px)' }}>
+    <div className="w-full" style={{ height: 'calc(100vh - 160px)' }}>
       <AgGridReact
         rowData={vehicles}
         columnDefs={getColumnDefs()}
         defaultColDef={defaultColDef}
-        enableCellTextSelection={true}
+        enableCellTextSelection={false}
         animateRows={true}
         suppressMenuHide={true}
         tooltipShowDelay={0}
@@ -42,7 +40,7 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         rowHeight={42}
         headerHeight={40}
         suppressMovableColumns={false}
-        suppressColumnMoveAnimation={true}
+        suppressColumnMoveAnimation={false}
         suppressDragLeaveHidesColumns={true}
       />
     </div>
