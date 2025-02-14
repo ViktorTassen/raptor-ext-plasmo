@@ -29,6 +29,9 @@ dependencies:
   ag-grid-community:
     specifier: ^33.1.0
     version: 33.1.0
+  ag-grid-enterprise:
+    specifier: ^33.1.0
+    version: 33.1.0
   ag-grid-react:
     specifier: ^33.1.0
     version: 33.1.0(react-dom@18.2.0)(react@18.2.0)
@@ -3881,6 +3884,14 @@ packages:
       ag-charts-types: 11.1.0
     dev: false
 
+  /ag-charts-enterprise@11.1.0:
+    resolution: {integrity: sha512-RAC3r2yxJN9iKPY15KRU7uIe929e6sIrgFxKY3PsO/zubpomzltX82JF2UXa5TaVF7iHx0IIZqIR1Pej+V5UiA==}
+    requiresBuild: true
+    dependencies:
+      ag-charts-community: 11.1.0
+    dev: false
+    optional: true
+
   /ag-charts-locale@11.1.0:
     resolution: {integrity: sha512-ur6KdPWabhkVFoQeCFWO+O0fxXkF4ev0SZO5KvHV1qUBtMO78j+3HuHJGnmmSCe8P288CDCzAghM23Qbl8yOjg==}
     dev: false
@@ -3902,6 +3913,15 @@ packages:
     resolution: {integrity: sha512-xPEgNjRuudfimbGytoDttjlgAjz/N+muq7Tgw2GTMuUeSG0z54kBObvJxhezOEEashVMKBpqb/YhzIE6e+opqQ==}
     dependencies:
       ag-charts-types: 11.1.0
+    dev: false
+
+  /ag-grid-enterprise@33.1.0:
+    resolution: {integrity: sha512-3pun15BykswGuIg70ENOnSOtl/eiVrbIozOlooN5paVq/NQPoF27hvpkhWjVZl/BUNQ9eUtzglhwetrtQyDBuA==}
+    dependencies:
+      ag-grid-community: 33.1.0
+    optionalDependencies:
+      ag-charts-community: 11.1.0
+      ag-charts-enterprise: 11.1.0
     dev: false
 
   /ag-grid-react@33.1.0(react-dom@18.2.0)(react@18.2.0):

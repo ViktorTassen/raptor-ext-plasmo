@@ -6,7 +6,7 @@ import { ColorCircle } from "~components/table/ColorCircle"
 import { calculateAverageMonthlyRevenue, calculatePreviousYearRevenue } from "~utils/revenue"
 import { getCurrencySymbol } from "~utils/currency"
 import { getVehicleTypeDisplay } from "~utils/vehicleTypes"
-import type { Vehicle, VehicleOwner, Distance, ExcessFee } from "~types"
+import type { Distance, ExcessFee } from "~types"
 
 export const getColumnDefs = (): ColDef[] => [
   {
@@ -25,6 +25,7 @@ export const getColumnDefs = (): ColDef[] => [
       )
     },
     sortable: false,
+    filter: false,
     width: 120
   },
   {
@@ -34,7 +35,12 @@ export const getColumnDefs = (): ColDef[] => [
   },
   {
     field: "make",
-    headerName: "Make"
+    headerName: "Make",
+    filter: true,
+    filterParams: {
+      filterOptions: ['contains'],
+      defaultOption: 'contains'
+    }
   },
   {
     field: "model",
@@ -47,7 +53,13 @@ export const getColumnDefs = (): ColDef[] => [
   },
   {
     field: "year",
-    headerName: "Year"
+    headerName: "Year",
+    filter: "agNumberColumnFilter", // Enables number filter
+    filterParams: {
+      filterOptions: ["inRange"], // Enables Min-Max filter
+      inRangeInclusive: true,
+      maxNumConditions: 1
+    },
   },
   {
     field: "dailyPricing",
