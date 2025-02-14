@@ -1,5 +1,7 @@
 import React, { useMemo } from "react"
 import type { ICellRendererParams } from "ag-grid-community"
+import { AgCharts } from "ag-charts-react"
+import type { AgBarSeriesOptions, AgChartOptions } from "ag-charts-community"
 import type { DailyPricing } from "~types"
 import { calculateMonthlyRevenue } from "~utils/revenue"
 
@@ -10,27 +12,48 @@ interface RevenueCellProps extends ICellRendererParams {
 export const RevenueCell = React.memo(function RevenueCell(props: RevenueCellProps) {
   const data = useMemo(() => calculateMonthlyRevenue(props.value), [props.value])
 
-  // Create mini bar chart using divs
+  const options = useMemo<AgChartOptions>(() => ({
+    data,
+    series: [{
+      type: "bar",
+      xKey: "name",
+      yKey: "total",
+      fill: "#593BFB",
+      highlightStyle: {
+        fill: "#4930C9"
+      }
+    } as AgBarSeriesOptions],
+    axes: [
+      {
+        type: "category",
+        position: "bottom",
+        title: { enabled: false },
+        label: { enabled: false }
+      },
+      {
+        type: "number",
+        position: "left",
+        title: { enabled: false },
+        label: { enabled: false }
+      }
+    ],
+    padding: { top: 2, right: 2, bottom: 2, left: 2 },
+    legend: { enabled: false },
+    background: { fill: "transparent" },
+    width: 200,
+    height: 40
+  }), [data])
+
   return (
-    <div className="flex items-end h-10 gap-[2px] w-[200px]">
-      {data.map((month, index) => {
-        const maxValue = Math.max(...data.map(d => d.total))
-        const height = month.total ? (month.total / maxValue) * 100 : 0
-        
-        return (
-          <div
-            key={index}
-            className="flex-1 bg-[#593BFB] hover:opacity-80 transition-opacity cursor-pointer relative group"
-            style={{ height: `${height}%` }}
-            title={`${month.fullMonth} ${month.year}: $${month.total.toLocaleString()}`}>
-            <div className="hidden group-hover:block absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 p-2 bg-white rounded shadow-lg text-sm whitespace-nowrap z-10">
-              {month.fullMonth} {month.year}
-              <br />
-              ${month.total.toLocaleString()}
-            </div>
-          </div>
-        )
-      })}
+    <div 
+      style={{ 
+        width: "200px", 
+        height: "40px",
+        display: "flex",
+        alignItems: "center"
+      }}
+    >
+      <AgCharts options={options} />
     </div>
   )
 })

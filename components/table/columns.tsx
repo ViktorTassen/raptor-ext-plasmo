@@ -1,13 +1,12 @@
 import { type ColDef } from "ag-grid-community"
 import { Badge } from "~components/ui/badge"
-import { BadgePopover } from "~components/table/BadgePopover"
 import { RevenueCell } from "~components/table/RevenueCell"
 import { InstantBookLocations } from "~components/table/InstantBookLocations"
 import { ColorCircle } from "~components/table/ColorCircle"
 import { calculateAverageMonthlyRevenue, calculatePreviousYearRevenue } from "~utils/revenue"
 import { getCurrencySymbol } from "~utils/currency"
 import { getVehicleTypeDisplay } from "~utils/vehicleTypes"
-import type { Vehicle, VehicleOwner, Distance, ExcessFee, AirportDeliveryLocation } from "~types"
+import type { Vehicle, VehicleOwner, Distance, ExcessFee } from "~types"
 
 export const getColumnDefs = (): ColDef[] => [
   {
@@ -54,13 +53,8 @@ export const getColumnDefs = (): ColDef[] => [
     field: "dailyPricing",
     headerName: "Est. Monthly Revenue",
     cellRenderer: RevenueCell,
-    width: 220,
+    width: 320,
     sortable: false,
-    cellStyle: { 
-      display: 'flex',
-      alignItems: 'center',
-      padding: '5px'
-    }
   },
   {
     headerName: "Avg Monthly",
@@ -110,15 +104,10 @@ export const getColumnDefs = (): ColDef[] => [
   {
     field: "rating",
     headerName: "Rating",
-    cellRenderer: (params) => {
+    valueFormatter: (params) => {
       const rating = params.value
       if (rating == null) return null
-      return (
-        <div className="flex items-center">
-          <span className="mr-1">{rating.toFixed(1)}</span>
-          <span style={{color:"#593BFB"}}>★</span>
-        </div>
-      )
+      return `${rating.toFixed(1)}★`
     }
   },
   {
@@ -136,19 +125,10 @@ export const getColumnDefs = (): ColDef[] => [
   {
     field: "details.owner",
     headerName: "Host",
-    cellRenderer: (params) => {
-      const owner = params.value as VehicleOwner | undefined
-      if (!owner) return null
-      return (
-        <div className="flex items-center gap-2">
-          <img
-            src={owner.imageUrl}
-            alt={owner.name}
-            className="h-6 w-6 rounded-full object-cover"
-          />
-          <span className="text-sm">{owner.name}</span>
-        </div>
-      )
+    valueGetter: (params) => {
+      const owner = params.data?.details?.owner
+      if (!owner) return ''
+      return owner.name
     }
   },
   {
@@ -166,35 +146,42 @@ export const getColumnDefs = (): ColDef[] => [
   {
     field: "details.owner",
     headerName: "Host Status",
-    cellRenderer: (params) => {
-      const owner = params.value as VehicleOwner | undefined
-      if (!owner) return null
-      return (
-        <div className="flex flex-wrap gap-1">
-          {owner.allStarHost && (
-            <Badge variant="warning">⭐ All-Star</Badge>
-          )}
-          {owner.proHost && (
-            <Badge>Pro</Badge>
-          )}
-        </div>
-      )
+    valueGetter: (params) => {
+      const owner = params.data?.details?.owner
+      if (!owner) return ''
+      const statuses = []
+      if (owner.allStarHost) statuses.push('⭐ All-Star')
+      if (owner.proHost) statuses.push('Pro')
+      return statuses.join(', ')
     }
   },
   {
     field: "details.rate.airportDeliveryLocationsAndFees",
     headerName: "Airport Delivery",
-    cellRenderer: (params) => {
-      const locations = params.value as AirportDeliveryLocation[] | undefined
-      if (!locations?.length) return null
-      return (
-        <BadgePopover 
-          badges={locations.map((loc, index) => ({
-            id: index,
-            label: `${loc.location.code}: ${getCurrencySymbol(loc.feeWithCurrency.currencyCode)}${loc.feeWithCurrency.amount}`
-          }))}
-        />
-      )
+    valueGetter: (params) => {
+      const locations = params.data?.details?.rate?.airportDeliveryLocationsAndFees
+      if (!locations?.length) return ''
+      return locations.map(loc => 
+        `${loc.location.code}(${getCurrencySymbol(loc.feeWithCurrency.currencyCode)}${loc.feeWithCurrency.amount})`
+      ).join(', ')
+    }
+  },
+  {
+    field: "details.extras.extras",
+    headerName: "Extras",
+    valueGetter: (params) => {
+      const extras = params.data?.details?.extras?.extras
+      if (!extras?.length) return ''
+      return extras.map(extra => extra.extraType.label).join(', ')
+    }
+  },
+  {
+    field: "details.badges",
+    headerName: "Badges",
+    valueGetter: (params) => {
+      const badges = params.data?.details?.badges
+      if (!badges?.length) return ''
+      return badges.map(badge => badge.label).join(', ')
     }
   },
   {
@@ -208,14 +195,9 @@ export const getColumnDefs = (): ColDef[] => [
   {
     field: "details.vehicle.automaticTransmission",
     headerName: "Transmission",
-    cellRenderer: (params) => {
-      const isAutomatic = params.value
-      if (isAutomatic === undefined) return null
-      return (
-        <Badge variant={isAutomatic ? "success" : "default"}>
-          {isAutomatic ? 'Auto' : 'Manual'}
-        </Badge>
-      )
+    valueFormatter: (params) => {
+      if (params.value === undefined) return null
+      return params.value ? 'Auto' : 'Manual'
     }
   },
   {
@@ -224,36 +206,6 @@ export const getColumnDefs = (): ColDef[] => [
     cellRenderer: (params) => {
       if (!params.value) return null
       return <ColorCircle color={params.value} />
-    }
-  },
-  {
-    field: "details.badges",
-    headerName: "Badges",
-    cellRenderer: (params) => {
-      const badges = params.value
-      if (!Array.isArray(badges) || badges.length === 0) return null
-      return <BadgePopover 
-        badges={badges.map(badge => ({
-          id: badge.id,
-          label: badge.label,
-          value: badge.value
-        }))} 
-      />
-    }
-  },
-  {
-    field: "details.extras.extras",
-    headerName: "Extras",
-    cellRenderer: (params) => {
-      const extras = params.value
-      if (!Array.isArray(extras) || extras.length === 0) return null
-      return <BadgePopover 
-        badges={extras.map((extra, index) => ({
-          id: index,
-          label: extra.extraType.label,
-          value: extra.extraType.label
-        }))} 
-      />
     }
   },
   {

@@ -1,15 +1,11 @@
-import React, { useState, useEffect, useMemo } from "react"
-
+import React, { useMemo } from "react"
 import { Storage } from "@plasmohq/storage"
 import type { Vehicle } from "~types"
 import { getColumnDefs } from "./table/columns"
-import type { ColDef } from "ag-grid-community";
-import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
-import { AgGridReact } from "ag-grid-react";
+import { AllCommunityModule, ModuleRegistry } from "ag-grid-community"
+import { AgGridReact } from "ag-grid-react"
 
-ModuleRegistry.registerModules([AllCommunityModule]);
-
-
+ModuleRegistry.registerModules([AllCommunityModule])
 
 const storage = new Storage({ area: "local" })
 
@@ -21,7 +17,11 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
   const defaultColDef = useMemo(() => ({
     sortable: true,
     resizable: true,
-    filter: true,
+    filter: 'agTextColumnFilter',
+    filterParams: {
+      buttons: ['apply', 'reset'],
+      closeOnApply: true
+    },
     flex: 1,
     minWidth: 100,
     autoHeight: true,

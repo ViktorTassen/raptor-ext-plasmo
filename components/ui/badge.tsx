@@ -10,13 +10,11 @@ type StyleVariants = {
 
 const badgeStyles = {
   base: {
-    display: "inline-flex",
     alignItems: "center",
     padding: "2px 6px",
     fontSize: "12px",
     fontWeight: 500,
     borderRadius: "4px",
-    whiteSpace: "nowrap"
   } as React.CSSProperties,
   variants: {
     default: {
