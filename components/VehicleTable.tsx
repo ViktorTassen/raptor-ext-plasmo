@@ -5,17 +5,9 @@ import { getColumnDefs } from "./table/columns"
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community"
 import { AgGridReact } from "ag-grid-react"
 import { themeQuartz } from 'ag-grid-community';
-import {
-  AllEnterpriseModule,
-} from 'ag-grid-enterprise';
 
-ModuleRegistry.registerModules([
-  AllEnterpriseModule,
-]);
+ModuleRegistry.registerModules([AllCommunityModule])
 
-// ModuleRegistry.registerModules([AllCommunityModule])
-
-const storage = new Storage({ area: "local" })
 
 interface VehicleTableProps {
   vehicles: Vehicle[]

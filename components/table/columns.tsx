@@ -25,8 +25,9 @@ export const getColumnDefs = (): ColDef[] => [
       )
     },
     sortable: false,
+    resizable: false,
     filter: false,
-    width: 120
+    width: 110
   },
   {
     field: "type",
