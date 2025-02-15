@@ -167,9 +167,22 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
       if (yearlyRevenue === 0) return null
       return (yearlyRevenue / marketValue) * 100
     },
-    valueFormatter: (params) => {
+    cellRenderer: (params) => {
       if (params.value == null) return '-'
-      return `${params.value.toFixed(1)}%`
+      const roi = params.value as number
+      let variant: "default" | "success" | "warning" = "default"
+      
+      if (roi >= 50) {
+        variant = "success"
+      } else if (roi < 25) {
+        variant = "warning"
+      }
+      
+      return (
+        <Badge variant={variant}>
+          {roi.toFixed(1)}%
+        </Badge>
+      )
     },
     filterParams: {
       filterOptions: ["inRange"],

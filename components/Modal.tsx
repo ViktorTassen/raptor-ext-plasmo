@@ -94,6 +94,11 @@ const Modal = ({ onClose }: ModalProps) => {
       if (header) {
         header.style.display = ''
       }
+      // Stop enrichment when modal is closed
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+        abortControllerRef.current = null
+      }
     }
   }, [])
 
@@ -149,6 +154,11 @@ const Modal = ({ onClose }: ModalProps) => {
         isProcessing: false
       }))
     }
+  }
+
+  const handleClose = () => {
+    stopEnrichment()
+    onClose()
   }
 
   const handleEnrichData = async () => {
@@ -288,7 +298,7 @@ const Modal = ({ onClose }: ModalProps) => {
       <Button
         variant="ghost"
         size="icon"
-        onClick={onClose}
+        onClick={handleClose}
         className="rounded-full">
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

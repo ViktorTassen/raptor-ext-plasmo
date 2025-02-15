@@ -85,13 +85,12 @@ async function fetchMarketValue(vehicle: Vehicle, trim?: string): Promise<Market
     const url = `https://marketvalues.vinaudit.com/getmarketvalue.php?key=1HB7ICF9L0GVH5Q&id=${id}`
     const response = await fetch(url)
     const data = await response.json()
-    // console.log('[Raptor] Market value data for', id, ':', data)
     
     if (data.success && data.prices) {
       return {
-        below: data.prices.below,
-        average: data.prices.average,
-        above: data.prices.above
+        below: data.prices.below.toFixed(0),
+        average: data.prices.average.toFixed(0),
+        above: data.prices.above.toFixed(0)
       }
     }
     return null
