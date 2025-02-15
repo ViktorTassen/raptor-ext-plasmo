@@ -68,6 +68,11 @@ const Modal = ({ onClose }: ModalProps) => {
     instance: storage,
   })
 
+  const [applyProtectionPlan] = useStorage({
+    key: "applyProtectionPlan",
+    instance: storage
+  })
+
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [enrichProgress, setEnrichProgress] = useState<EnrichmentProgress>({
     current: 0,
@@ -109,13 +114,15 @@ const Modal = ({ onClose }: ModalProps) => {
     fetchVehicles()
   }, [fetchVehicles])
 
-  // Pre-calculate revenue data when vehicles or includeDiscounts changes
+  // Pre-calculate revenue data when vehicles or settings change
   const vehiclesWithRevenue = useMemo(() => {
     return vehicles.map(vehicle => ({
       ...vehicle,
-      revenueData: calculateMonthlyRevenue(vehicle.dailyPricing, vehicle, includeDiscounts)
+      revenueData: vehicle.dailyPricing 
+        ? calculateMonthlyRevenue(vehicle.dailyPricing, vehicle, includeDiscounts, applyProtectionPlan) 
+        : []
     }))
-  }, [vehicles, includeDiscounts])
+  }, [vehicles, includeDiscounts, applyProtectionPlan])
 
   const handleRecordingToggle = () => {
     setIsRecording(!isRecording)

@@ -9,7 +9,7 @@ let lastEnrichmentTime: number | null = null
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 const getRandomDelay = () => {
-  return Math.floor(Math.random() * (3000 - 2100 + 1) + 2100)
+  return Math.floor(Math.random() * (3000 - 2100 + 1) + 100)
 }
 
 const waitForTuroApiDelay = async () => {

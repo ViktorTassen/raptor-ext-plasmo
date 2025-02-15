@@ -27,7 +27,7 @@ const SettingsModal = ({ onClose }: SettingsModalProps) => {
       className="fixed inset-0 bg-black bg-opacity-50 z-30 flex items-center justify-center"
       onClick={onClose}>
       <div 
-        className="bg-white w-[30%] rounded-lg shadow-xl p-6"
+        className="bg-white w-[480px] rounded-lg shadow-xl p-6"
         onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
