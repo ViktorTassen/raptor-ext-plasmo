@@ -1,9 +1,8 @@
-import React, { useMemo } from "react"
-import { Storage } from "@plasmohq/storage"
+import React, { useMemo, forwardRef } from "react"
+import { AgGridReact } from "ag-grid-react"
 import type { Vehicle } from "~types"
 import { getColumnDefs } from "./table/columns"
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community"
-import { AgGridReact } from "ag-grid-react"
 import { themeQuartz } from 'ag-grid-community';
 
 ModuleRegistry.registerModules([AllCommunityModule])
@@ -12,7 +11,7 @@ interface VehicleTableProps {
   vehicles: Vehicle[]
 }
 
-const VehicleTable = ({ vehicles }: VehicleTableProps) => {
+const VehicleTable = forwardRef<AgGridReact, VehicleTableProps>(({ vehicles }, ref) => {
   const defaultColDef = useMemo(() => ({
     sortable: true,
     resizable: true,
@@ -30,8 +29,10 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
   return (
     <div className="w-full" style={{ height: 'calc(100vh - 160px)' }}>
       <AgGridReact
+        ref={ref}
         theme={themeQuartz}
         rowData={vehicles}
+        getRowId={(params) => params.data.id}
         columnDefs={getColumnDefs()}
         defaultColDef={defaultColDef}
         enableCellTextSelection={false}
@@ -41,16 +42,18 @@ const VehicleTable = ({ vehicles }: VehicleTableProps) => {
         tooltipHideDelay={2000}
         rowHeight={42}
         headerHeight={40}
-        suppressMovableColumns={false}
-        suppressColumnMoveAnimation={false}
-        suppressDragLeaveHidesColumns={true}
         // Auto-size all columns on first data load
-        onFirstDataRendered={(params) => {
-          params.api.sizeColumnsToFit()
-        }}
+        // onFirstDataRendered={(params) => {
+        //   params.api.sizeColumnsToFit()
+        // }}
       />
-    </div>
+     </div>
   )
-}
+})
+
 
 export default React.memo(VehicleTable)
+
+
+
+

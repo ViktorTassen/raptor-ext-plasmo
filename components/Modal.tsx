@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from "react"
+import React, { useEffect, useRef, useState, useCallback } from "react"
 import { sendToBackground } from "@plasmohq/messaging"
 import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
-import { Download } from "lucide-react"
+import { Download, Disc2 } from "lucide-react"
 import iconCropped from "data-base64:~assets/turrex-icon-cropped.png"
 import VehicleTable from "./VehicleTable"
 import type { Vehicle, EnrichmentProgress } from "~types"
@@ -35,13 +35,11 @@ const Modal = ({ onClose }: ModalProps) => {
   const abortControllerRef = useRef<AbortController | null>(null)
   
   useEffect(() => {
-    // Hide header when modal opens
     const header = document.querySelector('header')
     if (header) {
       header.style.display = 'none'
     }
 
-    // Restore header visibility when modal closes
     return () => {
       const header = document.querySelector('header')
       if (header) {
@@ -50,8 +48,7 @@ const Modal = ({ onClose }: ModalProps) => {
     }
   }, [])
 
-  // Fetch vehicles from background
-  const fetchVehicles = async () => {
+  const fetchVehicles = useCallback(async () => {
     try {
       const response = await sendToBackground({
         name: "getVehicles"
@@ -62,11 +59,11 @@ const Modal = ({ onClose }: ModalProps) => {
     } catch (error) {
       console.error('[Raptor] Error fetching vehicles:', error)
     }
-  }
-
-  React.useEffect(() => {
-    fetchVehicles()
   }, [])
+
+  useEffect(() => {
+    fetchVehicles()
+  }, [fetchVehicles])
 
   const handleRecordingToggle = () => {
     setIsRecording(!isRecording)
@@ -107,13 +104,11 @@ const Modal = ({ onClose }: ModalProps) => {
       return
     }
 
-    // If recording is active, stop it first
     if (isRecording) {
       setIsRecording(false)
     }
 
     try {
-      // Create new AbortController for this enrichment session
       abortControllerRef.current = new AbortController()
       
       setEnrichProgress({
@@ -122,9 +117,7 @@ const Modal = ({ onClose }: ModalProps) => {
         isProcessing: true
       })
 
-      // Enrich vehicles one by one
       for (let i = 0; i < unenrichedVehicles.length; i++) {
-        // Check if enrichment was stopped
         if (!abortControllerRef.current || abortControllerRef.current.signal.aborted) {
           console.log('[Raptor] Enrichment stopped by user')
           break
@@ -134,15 +127,16 @@ const Modal = ({ onClose }: ModalProps) => {
         const enrichedVehicle = await enrichVehicle(vehicle, abortControllerRef.current.signal)
         
         if (enrichedVehicle) {
-          // Update the vehicle in the background
           await sendToBackground({
             name: "updateVehicle",
             body: enrichedVehicle
           })
-          // Update local state
+          
+          // Update vehicles array immutably
           setVehicles(prev => prev.map(v => 
             v.id === enrichedVehicle.id ? enrichedVehicle : v
           ))
+          
           console.log('[Raptor] Updated vehicle:', enrichedVehicle.id)
         }
 

@@ -99,6 +99,8 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
       if (!params.value || !Array.isArray(params.value)) return "0";
       return `${calculateMonthlyRevenue(params.value).reduce((acc, item) => acc + item.total, 0).toFixed(2)}`;
     },
+    sortable: false,
+    filter: false,
     minWidth: 240
   },
   {
@@ -230,9 +232,27 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
   {
     field: "details.owner",
     headerName: "Host",
-    valueGetter: (params: ValueGetterParams<Vehicle>) => params.data?.details?.owner?.name || '',
-    valueFormatter: (params) => params.value,
-    filter: false,
+    cellRenderer: (params) => {
+      const owner = params.value;
+      if (!owner) return null;
+      return (
+        <div className="flex items-center gap-2">
+          {owner.imageUrl && (
+            <img
+              src={owner.imageUrl}
+              alt={owner.name}
+              className="w-6 h-6 rounded-full object-cover"
+            />
+          )}
+          <span>{owner.name}</span>
+        </div>
+      );
+    },
+    valueGetter: (params: ValueGetterParams<Vehicle>) => params.data?.details?.owner,
+    filterParams: {
+      filterOptions: ['contains'],
+      defaultOption: 'contains'
+    },
     minWidth: 120
   },
   {
@@ -252,7 +272,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
       filterOptions: ['contains'],
       defaultOption: 'contains'
     },
-    minWidth: 80
+    minWidth: 100
   },
   {
     field: "details.owner",
