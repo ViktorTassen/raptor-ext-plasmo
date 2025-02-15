@@ -17,6 +17,11 @@ const SettingsModal = ({ onClose }: SettingsModalProps) => {
     instance: storage,
   })
 
+  const [applyProtectionPlan, setApplyProtectionPlan] = useStorage({
+    key: "applyProtectionPlan",
+    instance: storage
+  })
+
   return (
     <div 
       className="fixed inset-0 bg-black bg-opacity-50 z-30 flex items-center justify-center"
@@ -43,14 +48,27 @@ const SettingsModal = ({ onClose }: SettingsModalProps) => {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-medium">Apply Weekly/Monthly Discounts</h3>
+              <h3 className="font-medium">Include Weekly/Monthly Discounts</h3>
               <p className="text-sm text-gray-500">
-                Calculate revenue with discounts applied
+                Calculate revenue with weekly and monthly discounts applied
               </p>
             </div>
             <Switch
               checked={includeDiscounts}
               onCheckedChange={setIncludeDiscounts}
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-medium">Apply Protection Plan Rate</h3>
+              <p className="text-sm text-gray-500">
+                Calculate revenue based on host's protection plan rate
+              </p>
+            </div>
+            <Switch
+              checked={applyProtectionPlan}
+              onCheckedChange={setApplyProtectionPlan}
             />
           </div>
         </div>

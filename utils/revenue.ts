@@ -43,7 +43,8 @@ function initializeMonths(currency: string = 'USD'): { [key: string]: { total: n
 export const calculateMonthlyRevenue = (
   pricing: DailyPricing[] | undefined, 
   vehicle?: Vehicle,
-  includeDiscounts: boolean = false
+  includeDiscounts: boolean = false,
+  applyProtectionPlan: boolean = false
 ) => {
   if (!Array.isArray(pricing) || pricing.length === 0) {
     const months = []
@@ -79,11 +80,12 @@ export const calculateMonthlyRevenue = (
       
       if (i === pricing.length - 1 || !pricing[i + 1].wholeDayUnavailable) {
         if (currentBooking.length > 0) {
-          bookings.push({
+          const booking = {
             start: currentBooking[0].date.substring(8, 10) as unknown as number,
             end: currentBooking[currentBooking.length - 1].date.substring(8, 10) as unknown as number,
             days: currentBooking
-          })
+          }
+          bookings.push(booking)
           currentBooking = []
         }
       }
@@ -92,9 +94,14 @@ export const calculateMonthlyRevenue = (
 
   // Second pass: calculate revenue for each booking
   for (const booking of bookings) {
-    const revenue = includeDiscounts 
+    let revenue = includeDiscounts 
       ? applyDiscounts(booking.days, vehicle)
       : booking.days.reduce((sum, day) => sum + day.priceWithCurrency.amount, 0)
+    
+    // Apply protection plan rate if enabled
+    if (applyProtectionPlan && vehicle?.details?.hostTakeRate) {
+      revenue *= vehicle.details.hostTakeRate
+    }
     
     const startMonth = getMonthKey(booking.days[0].date)
     
@@ -138,11 +145,12 @@ export const calculateMonthlyRevenue = (
 export const calculateAverageMonthlyRevenue = (
   pricing: DailyPricing[] | undefined, 
   vehicle?: Vehicle, 
-  includeDiscounts: boolean = false
+  includeDiscounts: boolean = false,
+  applyProtectionPlan: boolean = false
 ) => {
   if (!Array.isArray(pricing)) return 0
   
-  const data = calculateMonthlyRevenue(pricing, vehicle, includeDiscounts)
+  const data = calculateMonthlyRevenue(pricing, vehicle, includeDiscounts, applyProtectionPlan)
   const nonZeroMonths = data.filter(month => month.total > 0)
   return nonZeroMonths.length > 0 
     ? Math.round(nonZeroMonths.reduce((sum, month) => sum + month.total, 0) / nonZeroMonths.length)
@@ -152,11 +160,12 @@ export const calculateAverageMonthlyRevenue = (
 export const calculatePreviousYearRevenue = (
   pricing: DailyPricing[] | undefined, 
   vehicle?: Vehicle, 
-  includeDiscounts: boolean = false
+  includeDiscounts: boolean = false,
+  applyProtectionPlan: boolean = false
 ) => {
   if (!Array.isArray(pricing)) return 0
   
-  const data = calculateMonthlyRevenue(pricing, vehicle, includeDiscounts)
+  const data = calculateMonthlyRevenue(pricing, vehicle, includeDiscounts, applyProtectionPlan)
   const lastYear = new Date().getFullYear() - 1
   return data
     .filter(month => month.year === lastYear)

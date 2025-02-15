@@ -38,7 +38,7 @@ const Modal = ({ onClose }: ModalProps) => {
   })
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const abortControllerRef = useRef<AbortController | null>(null)
-  
+
   useEffect(() => {
     const header = document.querySelector('header')
     if (header) {
@@ -106,7 +106,7 @@ const Modal = ({ onClose }: ModalProps) => {
 
   const handleEnrichData = async () => {
     if (!vehicles?.length) return
-    
+
     const unenrichedVehicles = vehicles.filter(v => !v.isEnriched)
     if (unenrichedVehicles.length === 0) {
       alert("All vehicles are already enriched!")
@@ -119,7 +119,7 @@ const Modal = ({ onClose }: ModalProps) => {
 
     try {
       abortControllerRef.current = new AbortController()
-      
+
       setEnrichProgress({
         current: 0,
         total: unenrichedVehicles.length,
@@ -133,7 +133,7 @@ const Modal = ({ onClose }: ModalProps) => {
 
         const vehicle = unenrichedVehicles[i]
         const enrichedVehicle = await enrichVehicle(vehicle, abortControllerRef.current.signal)
-        
+
         if (enrichedVehicle) {
           await sendToBackground({
             name: "updateVehicle",
@@ -180,8 +180,8 @@ const Modal = ({ onClose }: ModalProps) => {
               onClick={handleEnrichData}
               disabled={enrichProgress.isProcessing}
               variant="default">
-              {enrichProgress.isProcessing 
-                ? `Enriching ${enrichProgress.current}/${enrichProgress.total}` 
+              {enrichProgress.isProcessing
+                ? `Enriching ${enrichProgress.current}/${enrichProgress.total}`
                 : 'Enrich Data'}
             </Button>
             {enrichProgress.isProcessing && (
@@ -191,6 +191,10 @@ const Modal = ({ onClose }: ModalProps) => {
                 Stop Enriching
               </Button>
             )}
+
+
+
+
             <Button
               onClick={() => exportVehiclesData(vehiclesWithRevenue)}
               variant="outline"
@@ -200,20 +204,23 @@ const Modal = ({ onClose }: ModalProps) => {
             </Button>
             <Button
               onClick={clearRecordings}
-              variant="secondary">
+              variant="ghost">
               Clear All
             </Button>
           </>
         )}
+
+
+        <Button
+          variant="secondary"
+          onClick={() => setIsSettingsOpen(true)}
+        >
+          <Settings className="h-5 w-5" />
+          Settings
+        </Button>
       </div>
       <div className="flex items-center gap-4">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setIsSettingsOpen(true)}
-          className="rounded-full">
-          <Settings className="h-5 w-5" />
-        </Button>
+
         <Button
           variant="ghost"
           size="icon"
