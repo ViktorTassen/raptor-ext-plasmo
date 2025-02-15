@@ -40,10 +40,12 @@ const VehicleTable = forwardRef<AgGridReact, VehicleTableProps>(({ vehicles }, r
     flex: 1
   }), [])
 
+  // Use pre-calculated metrics if available, otherwise calculate on the fly
   const vehiclesWithSettings = useMemo(() => {
     return vehicles.map(vehicle => ({
       ...vehicle,
-      revenueData: vehicle.dailyPricing ? calculateMonthlyRevenue(vehicle.dailyPricing, vehicle, includeDiscounts, applyProtectionPlan) : []
+      revenueData: vehicle.metrics?.monthlyRevenue || 
+        (vehicle.dailyPricing ? calculateMonthlyRevenue(vehicle.dailyPricing, vehicle, includeDiscounts, applyProtectionPlan) : [])
     }))
   }, [vehicles, includeDiscounts, applyProtectionPlan])
 

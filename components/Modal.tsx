@@ -205,6 +205,8 @@ const Modal = ({ onClose }: ModalProps) => {
     }
   }
 
+  const enrichedCount = vehicles.filter(v => v.isEnriched).length
+
   const renderHeader = () => (
     <div className="flex justify-between items-center mb-6">
       <div className="flex items-center space-x-4">
@@ -230,8 +232,8 @@ const Modal = ({ onClose }: ModalProps) => {
                 disabled={enrichProgress.isProcessing}
                 variant="default">
                 {enrichProgress.isProcessing
-                  ? `Enriching ${enrichProgress.current}/${enrichProgress.total}`
-                  : 'Enrich Data'}
+                  ? `Enriching (${enrichedCount}/${vehicles.length})`
+                  : `Enrich Data (${enrichedCount}/${vehicles.length})`}
               </Button>
               {enrichProgress.isProcessing && (
                 <Button
