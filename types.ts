@@ -71,7 +71,6 @@ export interface VehicleRate {
   weeklyDistance: Distance
 }
 
-
 export interface MarketValue {
   below: number
   average: number
@@ -108,7 +107,7 @@ export interface VehicleDetails {
 
 export interface DailyPricing {
   date: string
-  price: number
+  priceWithCurrency: VehiclePrice
   custom: boolean
   wholeDayUnavailable: boolean
 }

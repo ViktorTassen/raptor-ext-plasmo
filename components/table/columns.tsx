@@ -3,14 +3,15 @@ import { Badge } from "~components/ui/badge"
 import { RevenueCell } from "~components/table/RevenueCell"
 import { InstantBookLocations } from "~components/table/InstantBookLocations"
 import { ColorCircle } from "~components/table/ColorCircle"
-import { calculateAverageMonthlyRevenue, calculateMonthlyRevenue, calculatePreviousYearRevenue } from "~utils/revenue"
+import { calculateAverageMonthlyRevenue, calculatePreviousYearRevenue } from "~utils/revenue"
 import { getCurrencySymbol } from "~utils/currency"
 import { getVehicleTypeDisplay } from "~utils/vehicleTypes"
 import type { Distance, ExcessFee, Vehicle } from "~types"
 
 const currencyFormatter = (params: ValueFormatterParams<Vehicle, number>) => {
   if (params.value == null) return '-'
-  const currency = params.data?.avgDailyPrice?.currency || 'USD'
+  const data = params.data as Vehicle & { revenueData: any[] }
+  const currency = data.revenueData?.[0]?.currency || data.avgDailyPrice?.currency || 'USD'
   const symbol = getCurrencySymbol(currency)
   return `${symbol}${params.value.toLocaleString()}`
 }
@@ -97,10 +98,9 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     width: 250,
     valueFormatter: (params) => {
       if (!params.value || !Array.isArray(params.value)) return "0";
-      return `${calculateMonthlyRevenue(params.value).reduce((acc, item) => acc + item.total, 0).toFixed(2)}`;
+      const data = params.data as Vehicle & { revenueData: any[] }
+      return data.revenueData.reduce((acc, item) => acc + item.total, 0).toFixed(2)
     },
-    sortable: false,
-    filter: false,
     minWidth: 240
   },
   {
@@ -119,8 +119,12 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
   {
     headerName: "Avg Monthly",
     valueGetter: (params: ValueGetterParams<Vehicle>) => {
-      const dailyPricing = params.data?.dailyPricing
-      return !dailyPricing ? 0 : calculateAverageMonthlyRevenue(dailyPricing)
+      const data = params.data as Vehicle & { revenueData: any[] }
+      if (!data.revenueData) return 0
+      const filteredData = data.revenueData.filter(month => month.total !== 0)
+      return filteredData.length > 0 
+        ? Math.round(filteredData.reduce((sum, month) => sum + month.total, 0) / filteredData.length) 
+        : 0
     },
     valueFormatter: currencyFormatter,
     filterParams: {
@@ -133,8 +137,12 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
   {
     headerName: "Prev Year",
     valueGetter: (params: ValueGetterParams<Vehicle>) => {
-      const dailyPricing = params.data?.dailyPricing
-      return !dailyPricing ? 0 : calculatePreviousYearRevenue(dailyPricing)
+      const data = params.data as Vehicle & { revenueData: any[] }
+      if (!data.revenueData) return 0
+      const lastYear = new Date().getFullYear() - 1
+      return data.revenueData
+        .filter(month => month.year === lastYear)
+        .reduce((sum, month) => sum + month.total, 0)
     },
     valueFormatter: currencyFormatter,
     filterParams: {
@@ -272,7 +280,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
       filterOptions: ['contains'],
       defaultOption: 'contains'
     },
-    minWidth: 100
+    minWidth: 80
   },
   {
     field: "details.owner",

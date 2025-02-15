@@ -48,10 +48,10 @@ const calculateAverageDailyPrice = (dailyPricing: DailyPricing[]): VehiclePrice 
   const busyDays = dailyPricing.filter(day => day.wholeDayUnavailable)
   if (busyDays.length === 0) return { amount: 0, currency: "USD" }
   
-  const totalPrice = busyDays.reduce((sum, day) => sum + day.price, 0)
+  const totalPrice = busyDays.reduce((sum, day) => sum + day.priceWithCurrency.amount, 0)
   return {
     amount: Math.round(totalPrice / busyDays.length),
-    currency: "USD"
+    currency: busyDays[0].priceWithCurrency.currency
   }
 }
 
@@ -171,24 +171,15 @@ async function fetchVehicleDailyPricing(vehicleId: number) {
     const data = await response.json()
 
     if (data.dailyPricingResponses) {
-      const responses = data.dailyPricingResponses
-      const result = []
-
-      for (let i = 0; i < responses.length; i++) {
-        const currentDay = responses[i]
-        const nextDay = responses[i + 1]
-
-        if (currentDay.wholeDayUnavailable || (nextDay && nextDay.wholeDayUnavailable)) {
-          result.push({
-            date: currentDay.date,
-            price: currentDay.price,
-            custom: currentDay.custom,
-            wholeDayUnavailable: currentDay.wholeDayUnavailable
-          })
-        }
-      }
-
-      return result
+      return data.dailyPricingResponses.map(day => ({
+        date: day.date,
+        priceWithCurrency: {
+          amount: day.priceWithCurrency.amount,
+          currency: day.priceWithCurrency.currencyCode
+        },
+        custom: day.custom,
+        wholeDayUnavailable: day.wholeDayUnavailable
+      }))
     }
     return null
   } catch (error) {
