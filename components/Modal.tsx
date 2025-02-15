@@ -295,13 +295,7 @@ const Modal = ({ onClose }: ModalProps) => {
           transform transition-transform duration-300 ease-in-out overflow-auto relative">
           <div className="p-6">
             {renderHeader()}
-            {vehicles?.length > 0 ? (
-              <VehicleTable vehicles={vehiclesWithRevenue} />
-            ) : (
-              <div className="text-center text-gray-500 mt-8">
-                No vehicles recorded yet. Start recording to collect data.
-              </div>
-            )}
+            <VehicleTable vehicles={vehiclesWithRevenue} />
           </div>
         </div>
 

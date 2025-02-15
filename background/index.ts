@@ -60,11 +60,11 @@ chrome.runtime.onStartup.addListener(async () => {
   }
 })
 
-// Clean up on uninstall
-chrome.runtime.setUninstallURL("", () => {
-  db.delete().then(() => {
-    console.log('[Raptor] Database deleted successfully')
-  }).catch(error => {
-    console.error('[Raptor] Error deleting database:', error)
-  })
-})
+// // Clean up on uninstall
+// chrome.runtime.setUninstallURL("", () => {
+//   db.delete().then(() => {
+//     console.log('[Raptor] Database deleted successfully')
+//   }).catch(error => {
+//     console.error('[Raptor] Error deleting database:', error)
+//   })
+// })

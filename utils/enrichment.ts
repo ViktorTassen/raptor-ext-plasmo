@@ -3,10 +3,28 @@ import type { Vehicle, MarketValue, VehicleDetails, DailyPricing, VehiclePrice }
 
 const storage = new Storage({ area: "local" })
 
+let lastTuroApiCallTime: number | null = null
+let lastEnrichmentTime: number | null = null
+
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 const getRandomDelay = () => {
   return Math.floor(Math.random() * (3000 - 2100 + 1) + 2100)
+}
+
+const waitForTuroApiDelay = async () => {
+  if (lastTuroApiCallTime) {
+    const currentTime = Date.now()
+    const timeSinceLastCall = currentTime - lastTuroApiCallTime
+    const minDelay = 2100
+    
+    if (timeSinceLastCall < minDelay) {
+      const waitTime = minDelay - timeSinceLastCall
+      console.log(`[Raptor] Waiting ${waitTime}ms before next Turo API call`)
+      await delay(waitTime)
+    }
+  }
+  lastTuroApiCallTime = Date.now()
 }
 
 const formatDate = (date: Date): string => {
@@ -67,7 +85,7 @@ async function fetchMarketValue(vehicle: Vehicle, trim?: string): Promise<Market
     const url = `https://marketvalues.vinaudit.com/getmarketvalue.php?key=1HB7ICF9L0GVH5Q&id=${id}`
     const response = await fetch(url)
     const data = await response.json()
-    console.log('[Raptor] Market value data for', id, ':', data)
+    // console.log('[Raptor] Market value data for', id, ':', data)
     
     if (data.success && data.prices) {
       return {
@@ -84,6 +102,8 @@ async function fetchMarketValue(vehicle: Vehicle, trim?: string): Promise<Market
 }
 
 async function fetchVehicleDetails(vehicleId: number): Promise<VehicleDetails | null> {
+  await waitForTuroApiDelay()
+  
   // Get search params from storage
   const searchParams = await storage.get("searchParams") as any
   const defaultDates = getDefaultDates()
@@ -97,6 +117,7 @@ async function fetchVehicleDetails(vehicleId: number): Promise<VehicleDetails | 
   })
 
   try {
+    console.log(`[Raptor] Fetching details for vehicle ${vehicleId}`)
     const response = await fetch(`${baseUrl}?${params}`)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -156,6 +177,8 @@ async function fetchVehicleDetails(vehicleId: number): Promise<VehicleDetails | 
 }
 
 async function fetchVehicleDailyPricing(vehicleId: number) {
+  await waitForTuroApiDelay()
+  
   const baseUrl = 'https://turo.com/api/vehicle/daily_pricing'
   const params = new URLSearchParams({
     end: getEndDate(),
@@ -164,6 +187,7 @@ async function fetchVehicleDailyPricing(vehicleId: number) {
   })
 
   try {
+    console.log(`[Raptor] Fetching daily pricing for vehicle ${vehicleId}`)
     const response = await fetch(`${baseUrl}?${params}`)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -197,6 +221,14 @@ export async function enrichVehicle(
       return null
     }
 
+    const currentTime = Date.now()
+    if (lastEnrichmentTime) {
+      const timeSinceLastEnrichment = currentTime - lastEnrichmentTime
+      console.log(`[Raptor] Starting enrichment for vehicle ${vehicle.id} (${timeSinceLastEnrichment}ms since last enrichment)`)
+    } else {
+      console.log(`[Raptor] Starting enrichment for vehicle ${vehicle.id} (first enrichment)`)
+    }
+
     const details = await fetchVehicleDetails(vehicle.id)
     const dailyPricing = await fetchVehicleDailyPricing(vehicle.id)
     
@@ -209,14 +241,20 @@ export async function enrichVehicle(
     
     if (details && dailyPricing) {
       const avgDailyPrice = calculateAverageDailyPrice(dailyPricing)
-      
-      return {
+      const enrichedVehicle = {
         ...vehicle,
         details,
         dailyPricing,
         avgDailyPrice,
         isEnriched: true
       }
+
+      const completionTime = Date.now()
+      const enrichmentDuration = completionTime - currentTime
+      console.log(`[Raptor] Completed enrichment for vehicle ${vehicle.id} (took ${enrichmentDuration}ms)`)
+      
+      lastEnrichmentTime = completionTime
+      return enrichedVehicle
     }
     
     return null
