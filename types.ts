@@ -123,6 +123,7 @@ export interface RevenueMetrics {
   averageMonthly: number
   previousYear: number
   roi?: number
+  utilizationRate?: number
 }
 
 export interface Vehicle {

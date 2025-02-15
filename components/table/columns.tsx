@@ -3,7 +3,7 @@ import { Badge } from "~components/ui/badge"
 import { RevenueCell } from "~components/table/RevenueCell"
 import { InstantBookLocations } from "~components/table/InstantBookLocations"
 import { ColorCircle } from "~components/table/ColorCircle"
-import { calculateAverageMonthlyRevenue, calculatePreviousYearRevenue } from "~utils/revenue"
+import { calculateAverageMonthlyRevenue, calculatePreviousYearRevenue, calculateUtilizationRate } from "~utils/revenue"
 import { getCurrencySymbol } from "~utils/currency"
 import { getVehicleTypeDisplay } from "~utils/vehicleTypes"
 import type { Distance, ExcessFee, Vehicle } from "~types"
@@ -114,7 +114,6 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
       maxNumConditions: 1
     },
     minWidth: 120,
-    
   },
   {
     headerName: "Avg Monthly",
@@ -181,6 +180,36 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
       return (
         <Badge variant={variant}>
           {roi.toFixed(1)}%
+        </Badge>
+      )
+    },
+    filterParams: {
+      filterOptions: ["inRange"],
+      inRangeInclusive: true,
+      maxNumConditions: 1
+    },
+    minWidth: 100
+  },
+  {
+    headerName: "Utilization",
+    valueGetter: (params: ValueGetterParams<Vehicle>) => {
+      if (!params.data?.dailyPricing) return null
+      return calculateUtilizationRate(params.data.dailyPricing)
+    },
+    cellRenderer: (params) => {
+      if (params.value == null) return '-'
+      const rate = params.value as number
+      let variant: "default" | "success" | "warning" = "default"
+      
+      if (rate >= 75) {
+        variant = "success"
+      } else if (rate < 50) {
+        variant = "warning"
+      }
+      
+      return (
+        <Badge variant={variant}>
+          {rate.toFixed(1)}%
         </Badge>
       )
     },

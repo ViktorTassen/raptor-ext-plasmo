@@ -40,6 +40,13 @@ function initializeMonths(currency: string = 'USD'): { [key: string]: { total: n
   return months
 }
 
+export const calculateUtilizationRate = (pricing: DailyPricing[] | undefined): number => {
+  if (!Array.isArray(pricing) || pricing.length === 0) return 0
+  
+  const busyDays = pricing.filter(day => day.wholeDayUnavailable).length
+  return (busyDays / pricing.length) * 100
+}
+
 export const calculateMonthlyRevenue = (
   pricing: DailyPricing[] | undefined, 
   vehicle?: Vehicle,
