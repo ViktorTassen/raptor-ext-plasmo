@@ -1,4 +1,4 @@
-import { type ColDef } from "ag-grid-community"
+import { type ColDef, type ValueGetterParams, type ValueFormatterParams } from "ag-grid-community"
 import { Badge } from "~components/ui/badge"
 import { RevenueCell } from "~components/table/RevenueCell"
 import { InstantBookLocations } from "~components/table/InstantBookLocations"
@@ -8,11 +8,18 @@ import { getCurrencySymbol } from "~utils/currency"
 import { getVehicleTypeDisplay } from "~utils/vehicleTypes"
 import type { Distance, ExcessFee, Vehicle } from "~types"
 
-export const getColumnDefs = (): ColDef[] => [
+const currencyFormatter = (params: ValueFormatterParams<Vehicle, number>) => {
+  if (params.value == null) return '-'
+  const currency = params.data?.avgDailyPrice?.currency || 'USD'
+  const symbol = getCurrencySymbol(currency)
+  return `${symbol}${params.value.toLocaleString()}`
+}
+
+export const getColumnDefs = (): ColDef<Vehicle>[] => [
   {
     field: "images",
     headerName: "Image",
-    valueGetter: (params) => params.data.images?.[0]?.resizeableUrlTemplate || null,
+    valueGetter: (params: ValueGetterParams<Vehicle>) => params.data?.images?.[0]?.resizeableUrlTemplate || null,
     cellRenderer: (params) => {
       const urlTemplate = params.value;
       if (!urlTemplate) return null;
@@ -36,7 +43,11 @@ export const getColumnDefs = (): ColDef[] => [
     field: "type",
     headerName: "Type",
     valueFormatter: (params) => getVehicleTypeDisplay(params.value),
-    minWidth: 90
+    minWidth: 90,
+    filterParams: {
+      filterOptions: ['contains'],
+      defaultOption: 'contains'
+    },
   },
   {
     field: "make",
@@ -51,6 +62,10 @@ export const getColumnDefs = (): ColDef[] => [
   {
     field: "model",
     headerName: "Model",
+    filterParams: {
+      filterOptions: ['contains'],
+      defaultOption: 'contains'
+    },
     minWidth: 100
   },
   {
@@ -58,6 +73,10 @@ export const getColumnDefs = (): ColDef[] => [
     headerName: "Trim",
     valueFormatter: (params) => params.value || '-',
     sortable: false,
+    filterParams: {
+      filterOptions: ['contains'],
+      defaultOption: 'contains'
+    },
     minWidth: 100
   },
   {
@@ -78,71 +97,98 @@ export const getColumnDefs = (): ColDef[] => [
     width: 250,
     valueFormatter: (params) => {
       if (!params.value || !Array.isArray(params.value)) return "0";
-      return `$${calculateMonthlyRevenue(params.value).reduce((acc, item) => acc + item.total, 0).toFixed(2)}`;
+      return `${calculateMonthlyRevenue(params.value).reduce((acc, item) => acc + item.total, 0).toFixed(2)}`;
     },
     minWidth: 240
   },
   {
     field: "avgDailyPrice",
     headerName: "Avg Daily Price",
-    valueFormatter: (params) => {
-      if (!params.value) return '-'
-      return `${getCurrencySymbol(params.value.currency)}${params.value.amount}`
+    valueGetter: (params: ValueGetterParams<Vehicle>) => params.data?.avgDailyPrice?.amount || 0,
+    valueFormatter: currencyFormatter,
+    filterParams: {
+      filterOptions: ["inRange"],
+      inRangeInclusive: true,
+      maxNumConditions: 1
     },
-    minWidth: 120
+    minWidth: 120,
+    
   },
   {
     headerName: "Avg Monthly",
-    valueGetter: (params) => {
-      const dailyPricing = params.data.dailyPricing
-      const amount = !dailyPricing ? 0 : calculateAverageMonthlyRevenue(dailyPricing)
-      const currency = params.data.avgDailyPrice?.currency || 'USD'
-      return `${getCurrencySymbol(currency)}${amount.toLocaleString()}`
+    valueGetter: (params: ValueGetterParams<Vehicle>) => {
+      const dailyPricing = params.data?.dailyPricing
+      return !dailyPricing ? 0 : calculateAverageMonthlyRevenue(dailyPricing)
     },
-    valueFormatter: (params) => params.value, // Ensure the value is formatted as a string
-    minWidth: 120
+    valueFormatter: currencyFormatter,
+    filterParams: {
+      filterOptions: ["inRange"],
+      inRangeInclusive: true,
+      maxNumConditions: 1
+    },
+    minWidth: 140
   },
   {
     headerName: "Prev Year",
-    valueGetter: (params) => {
-      const dailyPricing = params.data.dailyPricing
-      const amount = !dailyPricing ? 0 : calculatePreviousYearRevenue(dailyPricing)
-      const currency = params.data.avgDailyPrice?.currency || 'USD'
-      return `${getCurrencySymbol(currency)}${amount.toLocaleString()}`
+    valueGetter: (params: ValueGetterParams<Vehicle>) => {
+      const dailyPricing = params.data?.dailyPricing
+      return !dailyPricing ? 0 : calculatePreviousYearRevenue(dailyPricing)
     },
-    valueFormatter: (params) => params.value, // Ensure the value is formatted as a string
+    valueFormatter: currencyFormatter,
+    filterParams: {
+      filterOptions: ["inRange"],
+      inRangeInclusive: true,
+      maxNumConditions: 1
+    },
     minWidth: 120
   },
   {
     field: "details.marketValue.below",
     headerName: "Avg Market Value",
-    valueFormatter: (params) => {
-      if (!params.value) return '-'
-      return `$${params.value.toFixed(0).toLocaleString()}`
+    valueFormatter: currencyFormatter,
+    filterParams: {
+      filterOptions: ["inRange"],
+      inRangeInclusive: true,
+      maxNumConditions: 1
     },
     minWidth: 120
   },
   {
     headerName: "Days on Turo",
-    valueGetter: (params) => {
-      const listingDate = params.data.details?.vehicle?.listingCreatedTime
+    valueGetter: (params: ValueGetterParams<Vehicle>) => {
+      const listingDate = params.data?.details?.vehicle?.listingCreatedTime
       if (!listingDate) return 0
       const created = new Date(listingDate)
       const today = new Date()
       const diffTime = Math.abs(today.getTime() - created.getTime())
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     },
-    valueFormatter: (params) => params.value.toString(), // Ensure the value is formatted as a string
+    valueFormatter: (params) => params.value.toString(),
+    filterParams: {
+      filterOptions: ["inRange"],
+      inRangeInclusive: true,
+      maxNumConditions: 1
+    },
     minWidth: 120
   },
   {
     field: "completedTrips",
     headerName: "Trips",
+    filterParams: {
+      filterOptions: ["inRange"],
+      inRangeInclusive: true,
+      maxNumConditions: 1
+    },
     minWidth: 100
   },
   {
     field: "details.numberOfFavorites",
     headerName: "Favs",
+    filterParams: {
+      filterOptions: ["inRange"],
+      inRangeInclusive: true,
+      maxNumConditions: 1
+    },
     minWidth: 80
   },
   {
@@ -153,11 +199,17 @@ export const getColumnDefs = (): ColDef[] => [
       if (rating == null) return null
       return `${rating.toFixed(1)}★`
     },
+    filter: false,
     minWidth: 100
   },
   {
     field: "details.numberOfReviews",
     headerName: "Reviews",
+    filterParams: {
+      filterOptions: ["inRange"],
+      inRangeInclusive: true,
+      maxNumConditions: 1
+    },
     minWidth: 100
   },
   {
@@ -168,18 +220,19 @@ export const getColumnDefs = (): ColDef[] => [
     },
     cellRenderer: (params) => {
       if (!params.value) return null
-      console.log(params)
       return (
           <InstantBookLocations preferences={params.value} />
       )
     },
+    filter: false,
     minWidth: 160
   },
   {
     field: "details.owner",
     headerName: "Host",
-    valueGetter: (params) => params.data?.details?.owner?.name || '',
-    valueFormatter: (params) => params.value, // Ensure the value is formatted as a string
+    valueGetter: (params: ValueGetterParams<Vehicle>) => params.data?.details?.owner?.name || '',
+    valueFormatter: (params) => params.value,
+    filter: false,
     minWidth: 120
   },
   {
@@ -189,17 +242,22 @@ export const getColumnDefs = (): ColDef[] => [
       if (params.value == null) return null
       return `${(params.value * 100).toFixed(0)}%`
     },
+    filter: false,
     minWidth: 100
   },
   {
     field: "hostId",
     headerName: "Host ID",
+    filterParams: {
+      filterOptions: ['contains'],
+      defaultOption: 'contains'
+    },
     minWidth: 80
   },
   {
     field: "details.owner",
     headerName: "Host Status",
-    valueGetter: (params) => {
+    valueGetter: (params: ValueGetterParams<Vehicle>) => {
       const owner = params.data?.details?.owner;
       if (!owner) return '';
       const statuses = [];
@@ -208,6 +266,10 @@ export const getColumnDefs = (): ColDef[] => [
       return statuses.join(', ');
     },
     valueFormatter: (params) => params.value,
+    filterParams: {
+      filterOptions: ['contains'],
+      defaultOption: 'contains'
+    },
     minWidth: 100
   },
   {
@@ -219,6 +281,8 @@ export const getColumnDefs = (): ColDef[] => [
         `${loc.location.code}(${getCurrencySymbol(loc.feeWithCurrency.currencyCode)}${loc.feeWithCurrency.amount})`
       ).join(', ')
     },
+    filter: false,
+    sortable: false,
     minWidth: 100
   },
   {
@@ -242,12 +306,16 @@ export const getColumnDefs = (): ColDef[] => [
   {
     field: "location",
     headerName: "City, State",
-    valueGetter: (params) => {
-      const location = params.data.location
+    valueGetter: (params: ValueGetterParams<Vehicle>) => {
+      const location = params.data?.location
       return location?.city && location?.state ? `${location.city}, ${location.state}` : location?.city || location?.state || '-'
     },
     valueFormatter: (params) => params.value,
-    minWidth: 100
+    minWidth: 100,
+    filterParams: {
+      filterOptions: ['contains'],
+      defaultOption: 'contains'
+    },
   },
   {
     field: "details.vehicle.automaticTransmission",
@@ -256,7 +324,11 @@ export const getColumnDefs = (): ColDef[] => [
       if (params.value === undefined) return null
       return params.value ? `Auto` : `Manual`
     },
-    minWidth: 80
+    minWidth: 80,
+    filterParams: {
+      filterOptions: ['contains'],
+      defaultOption: 'contains'
+    },
   },
   {
     field: "details.color",
@@ -266,7 +338,8 @@ export const getColumnDefs = (): ColDef[] => [
       if (!params.value) return null
       return <ColorCircle color={params.value} />
     },
-    minWidth: 60
+    minWidth: 60,
+    filter: false,
   },
   {
     field: "details.rate.dailyDistance",
@@ -276,7 +349,8 @@ export const getColumnDefs = (): ColDef[] => [
       if (!distance) return null
       return `${distance.scalar} ${distance.unit.toLowerCase()}`
     },
-    minWidth: 100
+    minWidth: 100,
+    filter: false,
   },
   {
     field: "details.rate.weeklyDistance",
@@ -286,7 +360,8 @@ export const getColumnDefs = (): ColDef[] => [
       if (!distance) return null
       return `${distance.scalar} ${distance.unit.toLowerCase()}`
     },
-    minWidth: 100
+    minWidth: 100,
+    filter: false,
   },
   {
     field: "details.rate.monthlyDistance",
@@ -296,17 +371,20 @@ export const getColumnDefs = (): ColDef[] => [
       if (!distance) return null
       return `${distance.scalar} ${distance.unit.toLowerCase()}`
     },
-    minWidth: 100
+    minWidth: 100,
+    filter: false,
   },
   {
     field: "details.rate.excessFeePerDistance",
     headerName: "Excess Fee",
-    valueFormatter: (params) => {
-      const fee = params.value as ExcessFee | undefined
-      if (!fee) return null
-      return `${getCurrencySymbol(fee.currencyCode)}${fee.amount}`
+    valueGetter: (params: ValueGetterParams<Vehicle>) => {
+      const fee = params.data?.details?.rate?.excessFeePerDistance
+      if (!fee) return 0
+      return fee.amount
     },
-    minWidth: 100
+    valueFormatter: currencyFormatter,
+    minWidth: 100,
+    filter: false,
   },
   {
     field: "details.rate.weeklyDiscountPercentage",
@@ -315,7 +393,8 @@ export const getColumnDefs = (): ColDef[] => [
       if (params.value == null) return null
       return `${params.value}%`
     },
-    minWidth: 100
+    minWidth: 100,
+    filter: false,
   },
   {
     field: "details.rate.monthlyDiscountPercentage",
@@ -324,7 +403,8 @@ export const getColumnDefs = (): ColDef[] => [
       if (params.value == null) return null
       return `${params.value}%`
     },
-    minWidth: 100
+    minWidth: 100,
+    filter: false,
   },
   {
     field: "details.vehicle.listingCreatedTime",
@@ -343,6 +423,8 @@ export const getColumnDefs = (): ColDef[] => [
   {
     field: "id",
     headerName: "Vehicle ID",
+    filter: false,
+    sortable: false,
     minWidth: 60
   },
   {
@@ -361,6 +443,8 @@ export const getColumnDefs = (): ColDef[] => [
       )
     },
     valueFormatter: (params) => params.value,
+    filter: false,
+    sortable: false,
     minWidth: 100
   }
 ]
