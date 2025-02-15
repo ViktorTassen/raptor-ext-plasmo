@@ -27,11 +27,9 @@
   }
 }
 
-
 body {
   font-family: RLBasisGrotesque, sans-serif;
 }
-
 
 .ag-row .ag-cell {
   display: flex;
@@ -40,3 +38,6 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+
+

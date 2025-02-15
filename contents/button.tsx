@@ -1,7 +1,6 @@
 import cssText from "data-text:~style.css"
 import type { PlasmoCSConfig, PlasmoGetInlineAnchor } from "plasmo"
 import RaptorExplorerButton from "~components/RaptorExplorerButton"
-import { Toaster } from "~components/ui/sonner"
 
 export const config: PlasmoCSConfig = {
   matches: ["https://turo.com/us/en/search*"],
@@ -27,13 +26,7 @@ export const getInlineAnchor: PlasmoGetInlineAnchor = () => {
 }
 
 const Button = () => {
-  return (
-    <>
-      <Toaster />
-      <RaptorExplorerButton />
-    </>
-  )
-
+  return <RaptorExplorerButton />
 }
 
 export default Button

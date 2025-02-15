@@ -23,15 +23,13 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     
     // Filter out vehicles that already exist
     const newVehicles = vehicles.filter(v => !existingIds.has(v.id))
+    console.log('[Raptor] Stored', newVehicles.length, 'new vehicles in IndexedDB')
+    await storage.set("newVehiclesCount", newVehicles.length)
     
     if (newVehicles.length > 0) {
       // Store new vehicles
       await db.vehicles.bulkPut(newVehicles)
-      console.log('[Raptor] Stored', newVehicles.length, 'new vehicles in IndexedDB')
-      
-      // Update the new vehicles count in storage
-      const currentCount = await storage.get<number>("newVehiclesCount") || 0
-      await storage.set("newVehiclesCount", currentCount + newVehicles.length)
+     
     }
     
     res.send({ success: true, newCount: newVehicles.length })

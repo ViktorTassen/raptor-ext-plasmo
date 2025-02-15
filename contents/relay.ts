@@ -1,7 +1,8 @@
 import { sendToBackground } from "@plasmohq/messaging"
 import type { PlasmoCSConfig } from "plasmo"
 import type { Vehicle } from "~types"
- 
+
+
 export const config: PlasmoCSConfig = {
     matches: ["https://turo.com/*"],
 }
@@ -43,7 +44,7 @@ window.addEventListener('vehicles', async (event: CustomEvent) => {
         })
       
         console.log('[Raptor] Background script response:', response)
-        
+
       } catch (error) {
         console.error('[Raptor] Error sending to background:', error)
       }
