@@ -235,7 +235,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
       )
     },
     filter: false,
-    minWidth: 160
+    minWidth: 120
   },
   {
     field: "details.owner",

@@ -39,7 +39,7 @@ export function InstantBookLocations({ preferences }: InstantBookLocationsProps)
   if (locations.length === 0) return null
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" style={{height:"40px"}}>
       {locations.map((location, index) => (
         <location.icon key={index} className="h-4 w-4 text-gray-600" />
       ))}

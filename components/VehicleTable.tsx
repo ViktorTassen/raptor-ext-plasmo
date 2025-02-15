@@ -61,7 +61,6 @@ const VehicleTable = forwardRef<AgGridReact, VehicleTableProps>(({ vehicles }, r
         suppressMenuHide={true}
         tooltipShowDelay={0}
         tooltipHideDelay={2000}
-        rowHeight={42}
         headerHeight={40}
       />
      </div>

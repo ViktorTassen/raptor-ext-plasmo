@@ -12,9 +12,9 @@ interface RevenueCellProps extends ICellRendererParams {
 function renderer(params: AgBarSeriesTooltipRendererParams) {
   const currencySymbol = getCurrencySymbol(params.datum.currency || 'USD')
   return `
-    <div class="bg-white text-black shadow-lg rounded-lg p-2 text-xs">
-      <div class="text-gray-600">${params.datum.fullMonth} ${params.datum.year}</div>
-      <div class="text-md font-bold">${currencySymbol}${params.datum[params.yKey].toFixed(0)}</div>
+    <div class="bg-white rounded-lg px-2 py-1 text-xs font-basis">
+      <div class="text-gray-600">${params.datum.name} ${params.datum.year}</div>
+      <div class="text-sm font-black">${currencySymbol}${params.datum[params.yKey].toFixed(0)}</div>
     </div>
   `
 }
