@@ -43,6 +43,7 @@ window.addEventListener('vehicles', async (event: CustomEvent) => {
         })
       
         console.log('[Raptor] Background script response:', response)
+        
       } catch (error) {
         console.error('[Raptor] Error sending to background:', error)
       }
