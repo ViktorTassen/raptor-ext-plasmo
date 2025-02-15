@@ -112,6 +112,19 @@ export interface DailyPricing {
   wholeDayUnavailable: boolean
 }
 
+export interface RevenueMetrics {
+  monthlyRevenue: {
+    name: string
+    fullMonth: string
+    year: number
+    total: number
+    currency: string
+  }[]
+  averageMonthly: number
+  previousYear: number
+  roi?: number
+}
+
 export interface Vehicle {
   id: number
   avgDailyPrice: VehiclePrice
@@ -132,6 +145,7 @@ export interface Vehicle {
   details?: VehicleDetails
   dailyPricing?: DailyPricing[]
   isEnriched?: boolean
+  metrics?: RevenueMetrics
 }
 
 export interface EnrichmentProgress {

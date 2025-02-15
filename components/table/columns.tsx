@@ -153,6 +153,32 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     minWidth: 120
   },
   {
+    headerName: "ROI",
+    valueGetter: (params: ValueGetterParams<Vehicle>) => {
+      const data = params.data as Vehicle & { revenueData: any[] }
+      const marketValue = data.details?.marketValue?.below
+      if (!marketValue || !data.revenueData) return null
+
+      const lastYear = new Date().getFullYear() - 1
+      const yearlyRevenue = data.revenueData
+        .filter(month => month.year === lastYear)
+        .reduce((sum, month) => sum + month.total, 0)
+
+      if (yearlyRevenue === 0) return null
+      return (yearlyRevenue / marketValue) * 100
+    },
+    valueFormatter: (params) => {
+      if (params.value == null) return '-'
+      return `${params.value.toFixed(1)}%`
+    },
+    filterParams: {
+      filterOptions: ["inRange"],
+      inRangeInclusive: true,
+      maxNumConditions: 1
+    },
+    minWidth: 100
+  },
+  {
     field: "details.marketValue.below",
     headerName: "Avg Market Value",
     valueFormatter: currencyFormatter,
