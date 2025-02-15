@@ -24,7 +24,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     // Filter out vehicles that already exist
     const newVehicles = vehicles.filter(v => !existingIds.has(v.id))
     console.log('[Raptor] Stored', newVehicles.length, 'new vehicles in IndexedDB')
-    await storage.set("newVehiclesCount", newVehicles.length)
+    await storage.set("newVehiclesCount", {qty: newVehicles.length, id: Math.random()} )
     
     if (newVehicles.length > 0) {
       // Store new vehicles
