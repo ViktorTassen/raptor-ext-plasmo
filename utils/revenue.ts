@@ -6,19 +6,16 @@ function applyDiscounts(days: DailyPricing[], vehicle: Vehicle | undefined): num
   const { weeklyDiscountPercentage, monthlyDiscountPercentage } = vehicle.details.rate
   const totalDays = days.length
 
-  // No discounts available or days less than a week
   if ((!weeklyDiscountPercentage && !monthlyDiscountPercentage) || totalDays < 7) {
     return days.reduce((sum, day) => sum + day.priceWithCurrency.amount, 0)
   }
 
-  let totalPrice = days.reduce((sum, day) => sum + day.priceWithCurrency.amount, 0)
+  const totalPrice = days.reduce((sum, day) => sum + day.priceWithCurrency.amount, 0)
   
-  // Apply monthly discount if available and booking is 31 days or more
   if (monthlyDiscountPercentage && totalDays >= 31) {
     return totalPrice * (1 - monthlyDiscountPercentage / 100)
   }
   
-  // Apply weekly discount if available and booking is 7 days or more
   if (weeklyDiscountPercentage && totalDays >= 7) {
     return totalPrice * (1 - weeklyDiscountPercentage / 100)
   }
@@ -26,98 +23,137 @@ function applyDiscounts(days: DailyPricing[], vehicle: Vehicle | undefined): num
   return totalPrice
 }
 
+function getMonthKey(date: string): string {
+  return date.substring(0, 7)
+}
+
+function initializeMonths(currency: string = 'USD'): { [key: string]: { total: number; currency: string } } {
+  const months: { [key: string]: { total: number; currency: string } } = {}
+  const today = new Date()
+  
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth() - i)
+    const monthKey = d.toISOString().substring(0, 7)
+    months[monthKey] = { total: 0, currency }
+  }
+  
+  return months
+}
+
 export const calculateMonthlyRevenue = (
   pricing: DailyPricing[] | undefined, 
   vehicle?: Vehicle,
   includeDiscounts: boolean = false
 ) => {
-  if (!Array.isArray(pricing)) {
-    return Array(12).fill(0).map((_, i) => {
-      const d = new Date()
-      d.setMonth(d.getMonth() - i)
-      return {
+  if (!Array.isArray(pricing) || pricing.length === 0) {
+    const months = []
+    const today = new Date()
+    
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(today.getFullYear(), today.getMonth() - i)
+      months.push({
         name: d.toLocaleString('en-US', { month: 'short' }),
         fullMonth: d.toLocaleString('en-US', { month: 'long' }),
         year: d.getFullYear(),
         total: 0,
         currency: 'USD'
-      }
-    }).reverse()
+      })
+    }
+    
+    return months.reverse()
   }
 
-  const today = new Date()
-  const months: { [key: string]: { total: number; currency: string } } = {}
+  const months = initializeMonths(pricing[0].priceWithCurrency.currency)
+  const bookings: { start: number; end: number; days: DailyPricing[] }[] = []
+  let currentBooking: DailyPricing[] = []
   
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(today)
-    d.setMonth(d.getMonth() - i)
-    const monthKey = d.toISOString().substring(0, 7)
-    months[monthKey] = { total: 0, currency: pricing[0]?.priceWithCurrency.currency || 'USD' }
-  }
-
-  let consecutiveDays: DailyPricing[] = []
-  let prevDayAdded = false
-
-  pricing.forEach((day, index) => {
+  // First pass: identify bookings
+  for (let i = 0; i < pricing.length; i++) {
+    const day = pricing[i]
+    
     if (day.wholeDayUnavailable) {
-      // Add the previous day if it exists and is available
-      // and we haven't already added a previous day for this sequence
-      if (!prevDayAdded && index > 0 && !pricing[index - 1].wholeDayUnavailable) {
-        consecutiveDays.push(pricing[index - 1])
-        prevDayAdded = true
+      if (currentBooking.length === 0 && i > 0 && !pricing[i - 1].wholeDayUnavailable) {
+        currentBooking.push(pricing[i - 1])
       }
-      consecutiveDays.push(day)
+      currentBooking.push(day)
       
-      const isLastDay = index === pricing.length - 1
-      const nextDayAvailable = !isLastDay && !pricing[index + 1].wholeDayUnavailable
-      
-      if (isLastDay || nextDayAvailable) {
-        let revenue: number
-        
-        if (includeDiscounts) {
-          revenue = applyDiscounts(consecutiveDays, vehicle)
-        } else {
-          revenue = consecutiveDays.reduce((sum, day) => sum + day.priceWithCurrency.amount, 0)
+      if (i === pricing.length - 1 || !pricing[i + 1].wholeDayUnavailable) {
+        if (currentBooking.length > 0) {
+          bookings.push({
+            start: currentBooking[0].date.substring(8, 10) as unknown as number,
+            end: currentBooking[currentBooking.length - 1].date.substring(8, 10) as unknown as number,
+            days: currentBooking
+          })
+          currentBooking = []
         }
-
-        // Use the first actual unavailable day for the month key
-        const monthKey = consecutiveDays[prevDayAdded ? 1 : 0].date.substring(0, 7)
-        if (months[monthKey]) {
-          months[monthKey].total += revenue
-          months[monthKey].currency = consecutiveDays[0].priceWithCurrency.currency
-        }
-        
-        consecutiveDays = []
-        prevDayAdded = false
       }
     }
-  })
+  }
+
+  // Second pass: calculate revenue for each booking
+  for (const booking of bookings) {
+    const revenue = includeDiscounts 
+      ? applyDiscounts(booking.days, vehicle)
+      : booking.days.reduce((sum, day) => sum + day.priceWithCurrency.amount, 0)
+    
+    const startMonth = getMonthKey(booking.days[0].date)
+    
+    if (booking.days.length === 1 || getMonthKey(booking.days[0].date) === getMonthKey(booking.days[booking.days.length - 1].date)) {
+      // Single month booking
+      if (months[startMonth]) {
+        months[startMonth].total += revenue
+      }
+    } else {
+      // Multi-month booking
+      const dailyRate = revenue / booking.days.length
+      const monthRevenue = new Map<string, number>()
+      
+      for (const day of booking.days) {
+        const monthKey = getMonthKey(day.date)
+        monthRevenue.set(monthKey, (monthRevenue.get(monthKey) || 0) + dailyRate)
+      }
+      
+      for (const [monthKey, monthTotal] of monthRevenue) {
+        if (months[monthKey]) {
+          months[monthKey].total += monthTotal
+        }
+      }
+    }
+  }
 
   return Object.entries(months)
     .map(([month, { total, currency }]) => {
-      const date = new Date(month)
+      const [year, monthIndex] = month.split('-')
       return {
-        name: date.toLocaleString('en-US', { month: 'short' }),
-        fullMonth: date.toLocaleString('en-US', { month: 'long' }),
-        year: date.getFullYear(),
+        name: new Date(parseInt(year), parseInt(monthIndex) - 1).toLocaleString('en-US', { month: 'short' }),
+        fullMonth: new Date(parseInt(year), parseInt(monthIndex) - 1).toLocaleString('en-US', { month: 'long' }),
+        year: parseInt(year),
         total: Math.round(total),
         currency
       }
     })
-    .reverse()
+    .sort((a, b) => (a.year - b.year) || (new Date(a.fullMonth + ' 1').getMonth() - new Date(b.fullMonth + ' 1').getMonth()))
 }
 
-export const calculateAverageMonthlyRevenue = (pricing: DailyPricing[] | undefined, vehicle?: Vehicle, includeDiscounts: boolean = false) => {
+export const calculateAverageMonthlyRevenue = (
+  pricing: DailyPricing[] | undefined, 
+  vehicle?: Vehicle, 
+  includeDiscounts: boolean = false
+) => {
   if (!Array.isArray(pricing)) return 0
   
   const data = calculateMonthlyRevenue(pricing, vehicle, includeDiscounts)
-  const filteredData = data.filter(month => month.total !== 0)
-  return filteredData.length > 0 
-    ? Math.round(filteredData.reduce((sum, month) => sum + month.total, 0) / filteredData.length) 
+  const nonZeroMonths = data.filter(month => month.total > 0)
+  return nonZeroMonths.length > 0 
+    ? Math.round(nonZeroMonths.reduce((sum, month) => sum + month.total, 0) / nonZeroMonths.length)
     : 0
 }
 
-export const calculatePreviousYearRevenue = (pricing: DailyPricing[] | undefined, vehicle?: Vehicle, includeDiscounts: boolean = false) => {
+export const calculatePreviousYearRevenue = (
+  pricing: DailyPricing[] | undefined, 
+  vehicle?: Vehicle, 
+  includeDiscounts: boolean = false
+) => {
   if (!Array.isArray(pricing)) return 0
   
   const data = calculateMonthlyRevenue(pricing, vehicle, includeDiscounts)

@@ -43,9 +43,9 @@ const SettingsModal = ({ onClose }: SettingsModalProps) => {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-medium">Include Weekly/Monthly Discounts</h3>
+              <h3 className="font-medium">Apply Weekly/Monthly Discounts</h3>
               <p className="text-sm text-gray-500">
-                Calculate revenue with weekly and monthly discounts applied
+                Calculate revenue with discounts applied
               </p>
             </div>
             <Switch
