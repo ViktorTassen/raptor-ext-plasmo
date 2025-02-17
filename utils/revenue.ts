@@ -40,11 +40,28 @@ function initializeMonths(currency: string = 'USD'): { [key: string]: { total: n
   return months
 }
 
-export const calculateUtilizationRate = (pricing: DailyPricing[] | undefined): number => {
+export const calculateUtilizationRate = (pricing: DailyPricing[] | undefined, listingDate?: string): number => {
   if (!Array.isArray(pricing) || pricing.length === 0) return 0
   
-  const busyDays = pricing.filter(day => day.wholeDayUnavailable).length
-  return (busyDays / pricing.length) * 100
+  // Get start of previous year
+  const prevYearStart = new Date(new Date().getFullYear() - 1, 0, 1)
+  
+  // Use listing date if it's later than start of previous year
+  let startDate = prevYearStart
+  if (listingDate) {
+    const listingDateTime = new Date(listingDate)
+    if (listingDateTime > prevYearStart) {
+      startDate = listingDateTime
+    }
+  }
+
+  // Filter pricing to only include dates after start date
+  const relevantPricing = pricing.filter(day => new Date(day.date) >= startDate)
+  
+  if (relevantPricing.length === 0) return 0
+  
+  const busyDays = relevantPricing.filter(day => day.wholeDayUnavailable).length
+  return (busyDays / relevantPricing.length) * 100
 }
 
 export const calculateMonthlyRevenue = (
@@ -71,21 +88,53 @@ export const calculateMonthlyRevenue = (
     return months.reverse()
   }
 
-  const months = initializeMonths(pricing[0].priceWithCurrency.currency)
+  // Find the first valid pricing entry with currency information
+  const firstValidPricing = pricing.find(p => p?.priceWithCurrency?.currency)
+  if (!firstValidPricing) {
+    console.error('[Raptor] No valid pricing data found with currency information')
+    return calculateMonthlyRevenue(undefined)
+  }
+
+  // Get start of previous year
+  const prevYearStart = new Date(new Date().getFullYear() - 1, 0, 1)
+  
+  // Use listing date if it's later than start of previous year
+  let startDate = prevYearStart
+  if (vehicle?.details?.vehicle?.listingCreatedTime) {
+    const listingDateTime = new Date(vehicle.details.vehicle.listingCreatedTime)
+    if (listingDateTime > prevYearStart) {
+      startDate = listingDateTime
+    }
+  }
+
+  // Filter pricing data to only include dates after start date
+  const relevantPricing = pricing
+    .filter(p => p?.priceWithCurrency)
+    .filter(day => new Date(day.date) >= startDate)
+
+  if (relevantPricing.length === 0) {
+    return calculateMonthlyRevenue(undefined)
+  }
+
+  const months = initializeMonths(firstValidPricing.priceWithCurrency.currency)
   const bookings: { start: number; end: number; days: DailyPricing[] }[] = []
   let currentBooking: DailyPricing[] = []
   
   // First pass: identify bookings
-  for (let i = 0; i < pricing.length; i++) {
-    const day = pricing[i]
+  for (let i = 0; i < relevantPricing.length; i++) {
+    const day = relevantPricing[i]
+    if (!day?.priceWithCurrency) continue
     
     if (day.wholeDayUnavailable) {
-      if (currentBooking.length === 0 && i > 0 && !pricing[i - 1].wholeDayUnavailable) {
-        currentBooking.push(pricing[i - 1])
+      if (currentBooking.length === 0 && i > 0 && !relevantPricing[i - 1]?.wholeDayUnavailable) {
+        const prevDay = relevantPricing[i - 1]
+        if (prevDay?.priceWithCurrency) {
+          currentBooking.push(prevDay)
+        }
       }
       currentBooking.push(day)
       
-      if (i === pricing.length - 1 || !pricing[i + 1].wholeDayUnavailable) {
+      if (i === relevantPricing.length - 1 || !relevantPricing[i + 1]?.wholeDayUnavailable) {
         if (currentBooking.length > 0) {
           const booking = {
             start: currentBooking[0].date.substring(8, 10) as unknown as number,

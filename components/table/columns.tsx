@@ -13,7 +13,7 @@ const currencyFormatter = (params: ValueFormatterParams<Vehicle, number>) => {
   const data = params.data as Vehicle & { revenueData: any[] }
   const currency = data.revenueData?.[0]?.currency || data.avgDailyPrice?.currency || 'USD'
   const symbol = getCurrencySymbol(currency)
-  return `${symbol}${params.value.toLocaleString()}`
+  return `${symbol}${params.value.toFixed(0).toLocaleString()}`
 }
 
 export const getColumnDefs = (): ColDef<Vehicle>[] => [
@@ -155,16 +155,32 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     headerName: "ROI",
     valueGetter: (params: ValueGetterParams<Vehicle>) => {
       const data = params.data as Vehicle & { revenueData: any[] }
-      const marketValue = data.details?.marketValue?.below
-      if (!marketValue || !data.revenueData) return null
+      const marketValue = data.details?.marketValue?.below && data.details?.marketValue?.average
+        ? (parseFloat(data.details.marketValue.below) + parseFloat(data.details.marketValue.average)) / 2
+        : null
+      const listingDate = data.details?.vehicle?.listingCreatedTime
+      if (!marketValue || !data.revenueData || !listingDate) return null
 
-      const lastYear = new Date().getFullYear() - 1
-      const yearlyRevenue = data.revenueData
-        .filter(month => month.year === lastYear)
-        .reduce((sum, month) => sum + month.total, 0)
+      // Get start of previous year
+      const prevYearStart = new Date(new Date().getFullYear() - 1, 0, 1)
+      
+      // Use listing date if it's later than start of previous year
+      const startDate = new Date(listingDate) > prevYearStart ? new Date(listingDate) : prevYearStart
 
-      if (yearlyRevenue === 0) return null
-      return (yearlyRevenue / marketValue) * 100
+      // Calculate total revenue since start date
+      const totalRevenue = data.revenueData.reduce((sum, month) => {
+        const monthDate = new Date(month.year, new Date(month.fullMonth + ' 1').getMonth())
+        return monthDate.getTime() >= startDate.getTime() ? sum + month.total : sum
+      }, 0)
+
+      // Calculate the number of months since start date
+      const currentDate = new Date()
+      const monthsSinceStart = (currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
+
+      // Annualize the revenue
+      const annualizedRevenue = (totalRevenue / monthsSinceStart) * 12
+
+      return (annualizedRevenue / marketValue) * 100
     },
     cellRenderer: (params) => {
       if (params.value == null) return '-'
@@ -194,7 +210,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     headerName: "Utilization",
     valueGetter: (params: ValueGetterParams<Vehicle>) => {
       if (!params.data?.dailyPricing) return null
-      return calculateUtilizationRate(params.data.dailyPricing)
+      return calculateUtilizationRate(params.data.dailyPricing, params.data.details?.vehicle?.listingCreatedTime)
     },
     cellRenderer: (params) => {
       if (params.value == null) return '-'
@@ -221,8 +237,13 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     minWidth: 100
   },
   {
-    field: "details.marketValue.below",
+    field: "details.marketValue",
     headerName: "Avg Market Value",
+    valueGetter: (params: ValueGetterParams<Vehicle>) => {
+      const marketValue = params.data?.details?.marketValue
+      if (!marketValue?.below || !marketValue?.average) return null
+      return ((parseFloat(marketValue.below) + parseFloat(marketValue.average)) / 2)
+    },
     valueFormatter: currencyFormatter,
     filterParams: {
       filterOptions: ["inRange"],

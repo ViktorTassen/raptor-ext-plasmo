@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
 import { Disc2 } from "lucide-react"
@@ -14,6 +14,24 @@ const RaptorExplorerButton = () => {
     instance: storage
   })
 
+
+  useEffect(() => {
+    const initializeSettings = async () => {
+      const includeDiscounts = await storage.get("includeDiscounts")
+      const applyProtectionPlan = await storage.get("applyProtectionPlan")
+
+      if (includeDiscounts === undefined) {
+        await storage.set("includeDiscounts", true)
+      }
+      if (applyProtectionPlan === undefined) {
+        await storage.set("applyProtectionPlan", false)
+      }
+    }
+
+    initializeSettings()
+  }, [])
+
+  
   return (
     <>
       <Button

@@ -73,30 +73,27 @@ const calculateAverageDailyPrice = (dailyPricing: DailyPricing[]): VehiclePrice 
   }
 }
 
-async function fetchMarketValue(vehicle: Vehicle, trim?: string): Promise<MarketValue | null> {
+// Client side function (utils/market-value.ts)
+export async function fetchMarketValue(vehicle: Vehicle, trim?: string): Promise<MarketValue | null> {
   try {
-    const id = [
-      vehicle.year,
-      vehicle.make.toLowerCase().replace(/\s/g, '_'),
-      vehicle.model.toLowerCase().replace(/\s/g, '_').replace(/-/g, ''),
-      (trim || '').toLowerCase().replace(/\s/g, '_').replace(/-/g, '')
-    ].filter(Boolean).join('_')
+    const params = new URLSearchParams({
+      year: vehicle.year.toString(),
+      make: vehicle.make,
+      model: vehicle.model,
+      ...(trim && { trim })
+    });
 
-    const url = `https://marketvalues.vinaudit.com/getmarketvalue.php?key=1HB7ICF9L0GVH5Q&id=${id}`
-    const response = await fetch(url)
-    const data = await response.json()
+    const response = await fetch(`/api/market-value?${params}`);
+    const data = await response.json();
     
-    if (data.success && data.prices) {
-      return {
-        below: data.prices.below.toFixed(0),
-        average: data.prices.average.toFixed(0),
-        above: data.prices.above.toFixed(0)
-      }
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to fetch market value');
     }
-    return null
+
+    return data;
   } catch (error) {
-    console.error('[Raptor] Error fetching market value:', error)
-    return null
+    console.error('[Client] Error fetching market value:', error);
+    return null;
   }
 }
 

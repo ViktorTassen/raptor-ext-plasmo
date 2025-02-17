@@ -50,7 +50,7 @@ const SettingsModal = ({ onClose }: SettingsModalProps) => {
             <div>
               <h3 className="font-medium">Include Weekly/Monthly Discounts</h3>
               <p className="text-sm text-gray-500">
-                Calculate revenue with weekly and monthly discounts applied
+                Calculate revenue with discounts applied
               </p>
             </div>
             <Switch

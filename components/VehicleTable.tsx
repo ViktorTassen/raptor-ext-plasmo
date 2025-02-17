@@ -56,7 +56,7 @@ const VehicleTable = forwardRef<AgGridReact, VehicleTableProps>(({ vehicles }, r
         ref={ref}
         theme={themeQuartz}
         rowData={vehiclesWithSettings}
-        getRowId={(params) => params.data.id}
+        getRowId={(params) => params.data.id.toString()} // Convert ID to string
         columnDefs={getColumnDefs()}
         defaultColDef={defaultColDef}
         enableCellTextSelection={false}

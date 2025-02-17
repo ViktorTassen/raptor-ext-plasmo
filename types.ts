@@ -72,9 +72,9 @@ export interface VehicleRate {
 }
 
 export interface MarketValue {
-  below: number
-  average: number
-  above: number
+  below: string
+  average: string
+  above: string
 }
 
 export interface VehicleDetails {
