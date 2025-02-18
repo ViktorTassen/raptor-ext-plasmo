@@ -72,9 +72,8 @@ export interface VehicleRate {
 }
 
 export interface MarketValue {
-  below: string
-  average: string
-  above: string
+  price: number
+  provider: string
 }
 
 export interface VehicleDetails {
@@ -102,7 +101,7 @@ export interface VehicleDetails {
     trim: string
     url: string
   }
-  marketValue?: MarketValue
+  marketValue?: number
 }
 
 export interface DailyPricing {

@@ -1,5 +1,6 @@
 import { Storage } from "@plasmohq/storage"
 import type { Vehicle, MarketValue, VehicleDetails, DailyPricing, VehiclePrice } from "~types"
+import { fetchMarketValue } from "./auto-api"
 
 const storage = new Storage({ area: "local" })
 
@@ -73,29 +74,8 @@ const calculateAverageDailyPrice = (dailyPricing: DailyPricing[]): VehiclePrice 
   }
 }
 
-// Client side function (utils/market-value.ts)
-export async function fetchMarketValue(vehicle: Vehicle, trim?: string): Promise<MarketValue | null> {
-  try {
-    const params = new URLSearchParams({
-      year: vehicle.year.toString(),
-      make: vehicle.make,
-      model: vehicle.model,
-      ...(trim && { trim })
-    });
 
-    const response = await fetch(`/api/market-value?${params}`);
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to fetch market value');
-    }
 
-    return data;
-  } catch (error) {
-    console.error('[Client] Error fetching market value:', error);
-    return null;
-  }
-}
 
 async function fetchVehicleDetails(vehicleId: number): Promise<VehicleDetails | null> {
   await waitForTuroApiDelay()
@@ -229,10 +209,10 @@ export async function enrichVehicle(
     const dailyPricing = await fetchVehicleDailyPricing(vehicle.id)
     
     if (details) {
-      const marketValue = await fetchMarketValue(vehicle, details.vehicle.trim)
-      if (marketValue) {
-        details.marketValue = marketValue
-      }
+      let response = await fetchMarketValue(vehicle, details.vehicle.trim);
+      console.log("fetchMarketValue", response)
+      details.marketValue = response.price;
+
     }
     
     if (details && dailyPricing) {

@@ -155,9 +155,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     headerName: "ROI",
     valueGetter: (params: ValueGetterParams<Vehicle>) => {
       const data = params.data as Vehicle & { revenueData: any[] }
-      const marketValue = data.details?.marketValue?.below && data.details?.marketValue?.average
-        ? (parseFloat(data.details.marketValue.below) + parseFloat(data.details.marketValue.average)) / 2
-        : null
+      const marketValue = data.details?.marketValue
       const listingDate = data.details?.vehicle?.listingCreatedTime
       if (!marketValue || !data.revenueData || !listingDate) return null
 
@@ -239,11 +237,11 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
   {
     field: "details.marketValue",
     headerName: "Avg Market Value",
-    valueGetter: (params: ValueGetterParams<Vehicle>) => {
-      const marketValue = params.data?.details?.marketValue
-      if (!marketValue?.below || !marketValue?.average) return null
-      return ((parseFloat(marketValue.below) + parseFloat(marketValue.average)) / 2)
-    },
+    // valueGetter: (params: ValueGetterParams<Vehicle>) => {
+    //   const marketValue = params.data?.details?.marketValue
+    //   if (!marketValue?.below || !marketValue?.average) return null
+    //   return ((parseFloat(marketValue.below) + parseFloat(marketValue.average)) / 2)
+    // },
     valueFormatter: currencyFormatter,
     filterParams: {
       filterOptions: ["inRange"],
