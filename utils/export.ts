@@ -48,7 +48,7 @@ export function exportVehiclesData(vehicles: Vehicle[]) {
     year: vehicle.year,
     avgMonthlyRevenue: !vehicle.dailyPricing ? 0 : calculateAverageMonthlyRevenue(vehicle.dailyPricing),
     prevYearRevenue: !vehicle.dailyPricing ? 0 : calculatePreviousYearRevenue(vehicle.dailyPricing),
-    marketValue: vehicle.details?.marketValue?.below || '',
+    marketValue: vehicle.details?.marketValue || '',
     daysOnTuro: vehicle.details?.vehicle?.listingCreatedTime ? Math.ceil(
       Math.abs(new Date().getTime() - new Date(vehicle.details.vehicle.listingCreatedTime).getTime()) / 
       (1000 * 60 * 60 * 24)
@@ -68,10 +68,10 @@ export function exportVehiclesData(vehicles: Vehicle[]) {
     color: vehicle.details?.color || '',
     weeklyDiscount: vehicle.details?.rate?.weeklyDiscountPercentage ? `${vehicle.details.rate.weeklyDiscountPercentage}%` : '',
     monthlyDiscount: vehicle.details?.rate?.monthlyDiscountPercentage ? `${vehicle.details.rate.monthlyDiscountPercentage}%` : '',
-    dailyDistance: vehicle.details?.rate?.dailyDistance ? `${vehicle.details.rate.dailyDistance.scalar} ${vehicle.details.rate.dailyDistance.unit}` : '',
-    weeklyDistance: vehicle.details?.rate?.weeklyDistance ? `${vehicle.details.rate.weeklyDistance.scalar} ${vehicle.details.rate.weeklyDistance.unit}` : '',
-    monthlyDistance: vehicle.details?.rate?.monthlyDistance ? `${vehicle.details.rate.monthlyDistance.scalar} ${vehicle.details.rate.monthlyDistance.unit}` : '',
-    excessFee: vehicle.details?.rate?.excessFeePerDistance ? `${getCurrencySymbol(vehicle.details.rate.excessFeePerDistance.currency)}${vehicle.details.rate.excessFeePerDistance.amount}` : '',
+    dailyDistance: vehicle.details?.rate?.dailyDistance ? `${vehicle.details.rate.dailyDistance.scalar}` : '',
+    weeklyDistance: vehicle.details?.rate?.weeklyDistance ? `${vehicle.details.rate.weeklyDistance.scalar}` : '',
+    monthlyDistance: vehicle.details?.rate?.monthlyDistance ? `${vehicle.details.rate.monthlyDistance.scalar}` : '',
+    excessFee: vehicle.details?.rate?.excessFeePerDistance ? `${vehicle.details.rate.excessFeePerDistance.amount}` : '',
     listingDate: vehicle.details?.vehicle?.listingCreatedTime ? new Date(vehicle.details.vehicle.listingCreatedTime).toLocaleDateString() : '',
     vehicleId: vehicle.id,
     listingUrl: vehicle.details?.vehicle?.url || ''

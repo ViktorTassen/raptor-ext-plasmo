@@ -74,9 +74,6 @@ const calculateAverageDailyPrice = (dailyPricing: DailyPricing[]): VehiclePrice 
   }
 }
 
-
-
-
 async function fetchVehicleDetails(vehicleId: number): Promise<VehicleDetails | null> {
   await waitForTuroApiDelay()
   
@@ -209,10 +206,15 @@ export async function enrichVehicle(
     const dailyPricing = await fetchVehicleDailyPricing(vehicle.id)
     
     if (details) {
-      let response = await fetchMarketValue(vehicle, details.vehicle.trim);
-      console.log("fetchMarketValue", response)
-      details.marketValue = Number(response.price)
-
+      try {
+        const response = await fetchMarketValue(vehicle, details.vehicle.trim)
+        if (response?.success && response.price) {
+          details.marketValue = Number(response.price)
+        }
+      } catch (error) {
+        console.error(`[Raptor] Error fetching market value for vehicle ${vehicle.id}:`, error)
+        // Continue with enrichment even if market value fetch fails
+      }
     }
     
     if (details && dailyPricing) {

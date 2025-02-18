@@ -16,6 +16,14 @@ const currencyFormatter = (params: ValueFormatterParams<Vehicle, number>) => {
   return `${symbol}${params.value.toFixed(0).toLocaleString()}`
 }
 
+const currencyFormatterToFixed2 = (params: ValueFormatterParams<Vehicle, number>) => {
+  if (params.value == null) return '-'
+  const data = params.data as Vehicle & { revenueData: any[] }
+  const currency = data.revenueData?.[0]?.currency || data.avgDailyPrice?.currency || 'USD'
+  const symbol = getCurrencySymbol(currency)
+  return `${symbol}${params.value.toFixed(2).toLocaleString()}`
+}
+
 export const getColumnDefs = (): ColDef<Vehicle>[] => [
   {
     field: "images",
@@ -497,7 +505,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
       if (!fee) return 0
       return fee.amount
     },
-    valueFormatter: currencyFormatter,
+    valueFormatter: currencyFormatterToFixed2,
     minWidth: 100,
     filter: false,
   },
