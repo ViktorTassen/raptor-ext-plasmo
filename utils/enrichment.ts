@@ -211,7 +211,7 @@ export async function enrichVehicle(
     if (details) {
       let response = await fetchMarketValue(vehicle, details.vehicle.trim);
       console.log("fetchMarketValue", response)
-      details.marketValue = response.price;
+      details.marketValue = Number(response.price)
 
     }
     
