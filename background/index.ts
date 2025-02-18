@@ -68,3 +68,97 @@ chrome.runtime.onStartup.addListener(async () => {
 //     console.error('[Raptor] Error deleting database:', error)
 //   })
 // })
+
+
+const OFFSCREEN_DOCUMENT_PATH = 'tabs/offscreen.html';
+import { authenticateWithFirebase } from "~firebase/firebaseClient"
+
+let creatingOffscreenDocument;
+
+async function hasOffscreenDocument() {
+    // @ts-ignore
+    const matchedClients = await clients.matchAll();
+    return matchedClients.some(
+        (c) => c.url === chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH),
+    )
+}
+
+async function setupOffscreenDocument() {
+    if (await hasOffscreenDocument()) return;
+
+    if (creatingOffscreenDocument) {
+        await creatingOffscreenDocument;
+    } else {
+        creatingOffscreenDocument = chrome.offscreen.createDocument({
+            url: chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH),
+            reasons: [chrome.offscreen.Reason.DOM_SCRAPING],
+            justification: 'Firebase Authentication'
+        });
+        await creatingOffscreenDocument;
+        creatingOffscreenDocument = null;
+    }
+}
+
+async function getAuthFromOffscreen() {
+    await setupOffscreenDocument();
+    return new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ action: 'getAuth', target: 'offscreen' }, (response) => {
+            if (chrome.runtime.lastError) {
+                reject(chrome.runtime.lastError);
+            } else {
+                resolve(response);
+            }
+        });
+    });
+}
+
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "signIn") {
+        getAuthFromOffscreen()
+            .then(async (user: { uid: string, email: string, displayName: string }) => {
+                const minimalUser = {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName: user.displayName
+                }
+                console.log("User signed in:", user)
+                // Authenticate Firebase with the access token
+                if (user.uid) {
+                    await authenticateWithFirebase(user.uid)
+                }
+
+                await storage.set("user", minimalUser) // Store only necessary fields
+                sendResponse({ user: user })
+            })
+            .catch(error => {
+                console.error("Authentication error:", error)
+                sendResponse({ error: error.message })
+            })
+        return true // Keeps the message channel open for async response
+    }
+
+})
+
+
+
+chrome.runtime.onInstalled.addListener((details) => {
+    console.log('Extension installed or updated:', details);
+    if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
+        console.log('This is a new installation.');
+        chrome.tabs.create({ url: "tabs/welcome.html" });
+    } else if (details.reason === chrome.runtime.OnInstalledReason.UPDATE) {
+        console.log('Extension updated from version', details.previousVersion);
+    }
+});
+
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    if (
+        tab.url.startsWith("https://accounts.google.com/o/oauth2/auth/") ||
+        tab.url.startsWith("https://<firebase-project-id>.firebaseapp.com")
+    ) {
+        chrome.windows.update(tab.windowId, { focused: true })
+        return
+    }
+})
