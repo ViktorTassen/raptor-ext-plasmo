@@ -6,6 +6,8 @@ export const config: PlasmoCSConfig = {
   run_at: "document_start"
 }
 
+
+console.log('fdfdfd')
 const originalFetch = window.fetch
 window.fetch = async function (...args) {
   try {

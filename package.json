@@ -49,11 +49,21 @@
   },
   "manifest": {
     "host_permissions": [
-      "https://*/*"
+      "https://raptor3-web.vercel.app/*",
+      "https://raptorexplorer.com/*",
+      "http://localhost:3000/*",
+       "http://turo.com/*"
     ],
     "permissions": [
       "storage",
-      "webRequest"
-    ]
+      "webRequest",
+      "offscreen",
+      "tabs"
+    ],
+    "oauth2": {
+      "client_id": "511303035926-k69qe1nrlba7s0qnaea8a6887ojlnv5j.apps.googleusercontent.com",
+      "scopes": ["email", "profile"]
+    },
+    "key": "$CRX_KEY"
   }
 }

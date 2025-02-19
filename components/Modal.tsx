@@ -2,17 +2,16 @@ import React, { useEffect, useRef, useState, useCallback, useMemo } from "react"
 import { sendToBackground } from "@plasmohq/messaging"
 import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
-import { Download, Settings, Trash2 } from "lucide-react"
 import iconCropped from "data-base64:~assets/turrex-car-nospace.png"
 import VehicleTable from "./VehicleTable"
 import SettingsModal from "./SettingsModal"
+import ModalHeader from "./ModalHeader"
 import type { Vehicle, EnrichmentProgress } from "~types"
 import { enrichVehicle } from "~utils/enrichment"
 import { exportVehiclesData } from "~utils/export"
 import { Button } from "./ui/button"
 import { PortalProvider } from "./ui/portal-container"
 import { calculateMonthlyRevenue } from "~utils/revenue"
-import { Separator } from "./ui/separator"
 
 const storage = new Storage({ area: "local" })
 
@@ -222,98 +221,25 @@ const Modal = ({ onClose }: ModalProps) => {
     }
   }
 
-  const enrichedCount = vehicles.filter(v => v.isEnriched).length
-
-  const renderHeader = () => (
-    <div className="flex justify-between items-center mb-6">
-      <div className="flex items-center space-x-4">
-        <img src={iconCropped} alt="Logo" className="w-8 h-8" />
-        
-        {/* Recording controls */}
-        {!enrichProgress.isProcessing && (
-          <Button
-            onClick={handleRecordingToggle}
-            variant={isRecording ? "destructive" : "default"}>
-            {isRecording ? 'Stop Recording' : 'Start Recording'}
-          </Button>
-        )}
-
-        {vehicles?.length > 0 && (
-          <>
-            <Separator orientation="vertical" className="h-8" />
-            
-            {/* Data processing controls */}
-            <div className="flex items-center space-x-4">
-              <Button
-                onClick={handleEnrichData}
-                disabled={enrichProgress.isProcessing}
-                variant="default">
-                {enrichProgress.isProcessing
-                  ? `Enriching (${enrichedCount}/${vehicles.length})`
-                  : `Enrich Data (${enrichedCount}/${vehicles.length})`}
-              </Button>
-              {enrichProgress.isProcessing && (
-                <Button
-                  onClick={stopEnrichment}
-                  variant="destructive">
-                  Stop Enriching
-                </Button>
-              )}
-            </div>
-
-            <Separator orientation="vertical" className="h-8" />
-            
-            {/* Data management controls */}
-            <div className="flex items-center space-x-4">
-              <Button
-                onClick={() => exportVehiclesData(vehiclesWithRevenue)}
-                variant="outline"
-                className="flex items-center gap-2">
-                <Download className="h-4 w-4" />
-                Export CSV
-              </Button>
-              <Button
-                onClick={() => setIsClearConfirmOpen(true)}
-                variant="ghost"
-                className="flex items-center gap-2">
-                <Trash2 className="h-4 w-4" />
-                Clear All
-              </Button>
-            </div>
-          </>
-        )}
-
-        <Separator orientation="vertical" className="h-8" />
-
-        {/* Settings */}
-        <Button
-          variant="secondary"
-          onClick={() => setIsSettingsOpen(true)}
-          className="flex items-center gap-2">
-          <Settings className="h-5 w-5" />
-          Settings
-        </Button>
-      </div>
-
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={handleClose}
-        className="rounded-full">
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </Button>
-    </div>
-  )
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-25 flex justify-start">
       <PortalProvider>
         <div className="w-[95%] max-w-[95%] bg-white h-[calc(100vh)] shadow-xl 
           transform transition-transform duration-300 ease-in-out overflow-auto relative">
           <div className="p-6">
-            {renderHeader()}
+            <ModalHeader
+              iconCropped={iconCropped}
+              isRecording={isRecording}
+              vehicles={vehicles}
+              enrichProgress={enrichProgress}
+              onRecordingToggle={handleRecordingToggle}
+              onEnrichData={handleEnrichData}
+              onStopEnrichment={stopEnrichment}
+              onExportData={() => exportVehiclesData(vehiclesWithRevenue)}
+              onClearData={() => setIsClearConfirmOpen(true)}
+              onOpenSettings={() => setIsSettingsOpen(true)}
+              onClose={handleClose}
+            />
             <VehicleTable vehicles={vehiclesWithRevenue} />
           </div>
         </div>
