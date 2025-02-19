@@ -2,6 +2,7 @@ import { type FC, useState, useEffect } from "react"
 import { useStorage } from "@plasmohq/storage/hook"
 
 import SignInPopup from "~components/SignInPopup"
+import AccountTab from "~components/AccountTab"
 
 import "~style.css"
 
@@ -29,6 +30,8 @@ const Popup: FC = () => {
         <SignInPopup />
       </div>
     )}
+    // if user
+    <AccountTab />
   </div>
   )
 }
