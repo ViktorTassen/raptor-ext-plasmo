@@ -1,6 +1,7 @@
 import { getApps, initializeApp } from "firebase/app"
 import { getAuth, signInWithCustomToken, setPersistence, indexedDBLocalPersistence } from "firebase/auth/web-extension"
 import { getFirestore } from "firebase/firestore"
+import { getDatabase } from "firebase/database"
 
 export const clientCredentials = {
   apiKey: process.env.PLASMO_PUBLIC_FIREBASE_PUBLIC_API_KEY,
@@ -9,15 +10,17 @@ export const clientCredentials = {
   storageBucket: process.env.PLASMO_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.PLASMO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.PLASMO_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.PLASMO_PUBLIC_FIREBASE_MEASUREMENT_ID
+  measurementId: process.env.PLASMO_PUBLIC_FIREBASE_MEASUREMENT_ID,
+  databaseURL: process.env.PLASMO_PUBLIC_FIREBASE_DATABASE_URL // Add this for Realtime Database
 }
 
 let firebase_app = getApps().length ? getApps()[0] : initializeApp(clientCredentials)
 
 export const auth = getAuth(firebase_app)
 export const db = getFirestore(firebase_app)
+export const rtdb = getDatabase(firebase_app)
 
-setPersistence(auth, indexedDBLocalPersistence);
+setPersistence(auth, indexedDBLocalPersistence)
 
 // Function to authenticate with Firebase using custom token
 export const authenticateWithFirebase = async (uid: string) => {
@@ -48,7 +51,5 @@ export const authenticateWithFirebase = async (uid: string) => {
     throw error
   }
 }
-
-
 
 export default firebase_app

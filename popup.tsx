@@ -1,38 +1,22 @@
-import { type FC, useState, useEffect } from "react"
+import { type FC } from "react"
 import { useStorage } from "@plasmohq/storage/hook"
-
+import { Storage } from "@plasmohq/storage"
 import SignInPopup from "~components/SignInPopup"
 import AccountTab from "~components/AccountTab"
-
 import "~style.css"
 
-type TabType = "send" | "logs" | "account"
+const storage = new Storage({ area: "local" })
 
 const Popup: FC = () => {
-  const [user] = useStorage<{ email: string; uid: string } | null>("user", null)
-
-  // Verify balance when popup opens
-  useEffect(() => {
-    if (user?.uid) {
-     // verify license
-    }
-  }, [user?.uid])
-
-
+  const [user] = useStorage({
+    key: "user",
+    instance: storage
+  })
 
   return (
-    <div className="w-[400px] h-[400px] flex flex-col bg-surface">
-    
-
-
-    {!user && (
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-        <SignInPopup />
-      </div>
-    )}
-    // if user
-    <AccountTab />
-  </div>
+    <div className="w-[400px] max-h-[500px] flex flex-col bg-surface">
+      {!user ? <SignInPopup /> : <AccountTab />}
+    </div>
   )
 }
 
