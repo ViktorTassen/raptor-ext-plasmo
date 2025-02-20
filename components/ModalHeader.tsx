@@ -1,11 +1,10 @@
 import React from "react"
-import { Download, Settings, Trash2 } from "lucide-react"
+import { Download, Settings, Trash2, Crown } from "lucide-react"
 import { Button } from "./ui/button"
 import { Separator } from "./ui/separator"
 import type { Vehicle, EnrichmentProgress } from "~types"
 import { useAuth } from "~hooks/useAuth"
 import { Storage } from "@plasmohq/storage"
-import { useStorage } from "@plasmohq/storage/hook"
 
 const storage = new Storage({ area: "local" })
 
@@ -21,6 +20,9 @@ interface ModalHeaderProps {
   onClearData: () => void
   onOpenSettings: () => void
   onClose: () => void
+  onUpgrade: () => void
+  user: any
+  licenseStatus: { license: boolean; licenseStatus: string }
 }
 
 const ModalHeader = ({
@@ -34,13 +36,12 @@ const ModalHeader = ({
   onExportData,
   onClearData,
   onOpenSettings,
-  onClose
+  onClose,
+  onUpgrade,
+  user,
+  licenseStatus
 }: ModalHeaderProps) => {
   const { isLoading, handleGoogleSignIn } = useAuth()
-  const [user] = useStorage({
-    key: "user",
-    instance: storage
-  })
 
   const enrichedCount = vehicles.filter(v => v.isEnriched).length
 
@@ -59,6 +60,19 @@ const ModalHeader = ({
           </Button>
         ) : (
           <>
+            {/* Upgrade button */}
+            {!licenseStatus.license && (
+              <>
+                <Button
+                  onClick={onUpgrade}
+                  className="bg-[#593CFB] hover:bg-[#593CFB]/90 text-white flex items-center gap-2">
+                  <Crown className="w-4 h-4" />
+                  Upgrade to PRO
+                </Button>
+                <Separator orientation="vertical" className="h-8" />
+              </>
+            )}
+
             {/* Recording controls */}
             {!enrichProgress.isProcessing && (
               <Button

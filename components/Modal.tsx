@@ -12,6 +12,7 @@ import { exportVehiclesData } from "~utils/export"
 import { Button } from "./ui/button"
 import { PortalProvider } from "./ui/portal-container"
 import { calculateMonthlyRevenue } from "~utils/revenue"
+import { useLicense } from "~hooks/useLicense"
 
 const storage = new Storage({ area: "local" })
 
@@ -71,6 +72,13 @@ const Modal = ({ onClose }: ModalProps) => {
     key: "applyProtectionPlan",
     instance: storage
   })
+
+  const [user] = useStorage({
+    key: "user",
+    instance: storage
+  })
+
+  const licenseStatus = useLicense(user?.uid)
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [enrichProgress, setEnrichProgress] = useState<EnrichmentProgress>({
@@ -221,6 +229,10 @@ const Modal = ({ onClose }: ModalProps) => {
     }
   }
 
+  const handleUpgradeClick = () => {
+    chrome.runtime.openOptionsPage()
+  }
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-25 flex justify-start">
       <PortalProvider>
@@ -239,6 +251,9 @@ const Modal = ({ onClose }: ModalProps) => {
               onClearData={() => setIsClearConfirmOpen(true)}
               onOpenSettings={() => setIsSettingsOpen(true)}
               onClose={handleClose}
+              onUpgrade={handleUpgradeClick}
+              user={user}
+              licenseStatus={licenseStatus}
             />
             <VehicleTable vehicles={vehiclesWithRevenue} />
           </div>

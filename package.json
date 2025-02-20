@@ -52,7 +52,7 @@
       "https://raptor3-web.vercel.app/*",
       "https://raptorexplorer.com/*",
       "http://localhost:3000/*",
-       "http://turo.com/*"
+      "https://turo.com/*"
     ],
     "permissions": [
       "storage",
