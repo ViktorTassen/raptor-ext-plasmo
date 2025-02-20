@@ -4,9 +4,7 @@ import { Button } from "./ui/button"
 import { Separator } from "./ui/separator"
 import type { Vehicle, EnrichmentProgress } from "~types"
 import { useAuth } from "~hooks/useAuth"
-import { Storage } from "@plasmohq/storage"
-
-const storage = new Storage({ area: "local" })
+import { sendToBackground } from "@plasmohq/messaging"
 
 interface ModalHeaderProps {
   iconCropped: string
@@ -20,7 +18,6 @@ interface ModalHeaderProps {
   onClearData: () => void
   onOpenSettings: () => void
   onClose: () => void
-  onUpgrade: () => void
   user: any
   licenseStatus: { license: boolean; licenseStatus: string }
 }
@@ -37,13 +34,18 @@ const ModalHeader = ({
   onClearData,
   onOpenSettings,
   onClose,
-  onUpgrade,
   user,
   licenseStatus
 }: ModalHeaderProps) => {
   const { isLoading, handleGoogleSignIn } = useAuth()
 
   const enrichedCount = vehicles.filter(v => v.isEnriched).length
+
+  const handleUpgradeClick = async () => {
+    await sendToBackground({
+      name: "openOptions"
+    })
+  }
 
   return (
     <div className="flex justify-between items-center mb-6">
@@ -64,7 +66,7 @@ const ModalHeader = ({
             {!licenseStatus.license && (
               <>
                 <Button
-                  onClick={onUpgrade}
+                  onClick={handleUpgradeClick}
                   className="bg-[#593CFB] hover:bg-[#593CFB]/90 text-white flex items-center gap-2">
                   <Crown className="w-4 h-4" />
                   Upgrade to PRO

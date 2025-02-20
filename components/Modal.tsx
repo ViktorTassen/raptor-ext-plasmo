@@ -229,10 +229,6 @@ const Modal = ({ onClose }: ModalProps) => {
     }
   }
 
-  const handleUpgradeClick = () => {
-    chrome.runtime.openOptionsPage()
-  }
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-25 flex justify-start">
       <PortalProvider>
@@ -251,7 +247,6 @@ const Modal = ({ onClose }: ModalProps) => {
               onClearData={() => setIsClearConfirmOpen(true)}
               onOpenSettings={() => setIsSettingsOpen(true)}
               onClose={handleClose}
-              onUpgrade={handleUpgradeClick}
               user={user}
               licenseStatus={licenseStatus}
             />
