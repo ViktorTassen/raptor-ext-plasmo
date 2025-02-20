@@ -10,6 +10,7 @@
     "package": "plasmo package"
   },
   "dependencies": {
+    "@ag-grid-community/client-side-row-model": "^32.3.3",
     "@plasmohq/messaging": "^0.6.2",
     "@plasmohq/storage": "^1.15.0",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
@@ -62,7 +63,10 @@
     ],
     "oauth2": {
       "client_id": "511303035926-k69qe1nrlba7s0qnaea8a6887ojlnv5j.apps.googleusercontent.com",
-      "scopes": ["email", "profile"]
+      "scopes": [
+        "email",
+        "profile"
+      ]
     },
     "key": "$CRX_KEY"
   }

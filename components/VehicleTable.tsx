@@ -1,151 +1,137 @@
-import React, { useMemo, forwardRef, useRef, useEffect } from "react"
-import { AgGridReact } from "ag-grid-react"
-import { Storage } from "@plasmohq/storage"
-import { useStorage } from "@plasmohq/storage/hook"
-import type { Vehicle } from "~types"
-import { getColumnDefs } from "./table/columns"
-import { AllCommunityModule, ModuleRegistry } from "ag-grid-community"
-import { themeQuartz } from 'ag-grid-community'
-import { calculateMonthlyRevenue } from "~utils/revenue"
-
+import React, { useMemo, forwardRef, useRef, useEffect, useCallback } from "react";
+import { AgGridReact } from "ag-grid-react";
+import { AllCommunityModule, ModuleRegistry, type RowModelType } from "ag-grid-community"
 ModuleRegistry.registerModules([AllCommunityModule])
 
-const storage = new Storage({ area: "local" })
-const GRID_STATE_KEY = "vehicle-grid-state"
+import { Storage } from "@plasmohq/storage";
+import { useStorage } from "@plasmohq/storage/hook";
+import type { Vehicle } from "~types";
+import { getColumnDefs } from "./table/columns";
+import { calculateMonthlyRevenue } from "~utils/revenue";
+
+const storage = new Storage({ area: "local" });
+const GRID_STATE_KEY = "vehicle-grid-state";
 
 interface VehicleTableProps {
-  vehicles: Vehicle[]
+  vehicles: Vehicle[];
 }
 
 const VehicleTable = forwardRef<AgGridReact, VehicleTableProps>(({ vehicles }, ref) => {
-  const [includeDiscounts] = useStorage({
-    key: "includeDiscounts",
-    instance: storage
-  })
-
-  const [applyProtectionPlan] = useStorage({
-    key: "applyProtectionPlan",
-    instance: storage
-  })
+  const [includeDiscounts] = useStorage({ key: "includeDiscounts", instance: storage });
+  const [applyProtectionPlan] = useStorage({ key: "applyProtectionPlan", instance: storage });
   
-  const gridRef = useRef<AgGridReact>(null)
-  const isInitialLoad = useRef(true)
+  const gridRef = useRef<AgGridReact>(null);
+  const previousVehicleIds = useRef<Set<number>>(new Set());
   
   const defaultColDef = useMemo(() => ({
     sortable: true,
     resizable: true,
-    filter: 'agTextColumnFilter',
-    filterParams: {
-      buttons: ['reset', 'apply'],
-      closeOnApply: true
-    },
+    filter: "agTextColumnFilter",
+    filterParams: { buttons: ["reset", "apply"], closeOnApply: true },
     autoHeight: true,
-    suppressSizeToFit: false,
-    flex: 1
-  }), [])
+    flex: 1,
+    valueCache: true,
+    suppressMenu: true,
+  }), []);
 
-  // Calculate revenue data with memoization
-  const vehiclesWithSettings = useMemo(() => {
-    return vehicles.map(vehicle => ({
-      ...vehicle,
-      revenueData: vehicle.dailyPricing 
-        ? calculateMonthlyRevenue(vehicle.dailyPricing, vehicle, includeDiscounts, applyProtectionPlan) 
-        : []
-    }))
-  }, [vehicles, includeDiscounts, applyProtectionPlan])
+  const gridOptions = useMemo(() => ({
+    animateRows: true,
+    rowBuffer: 10,
+    rowModelType: "clientSide" as RowModelType,
+    paginationPageSize: 50,
+    cacheBlockSize: 50,
+    suppressCellFlash: true,
+    suppressRowDrag: true,
+    suppressColumnVirtualisation: true,
+    suppressClipboardPaste: true,
+    suppressCellSelection: true,
+    deltaRowDataMode: true,
+    // getRowHeight: () => 40,
+    getRowId: (params) => params.data.id.toString(),
+  }), []);
 
-  // Save grid state when columns change
-  const onColumnStateChanged = () => {
-    console.log("onColumnStateChanged")
-    if (!gridRef.current?.api) return
-    
-    const columnState = gridRef.current.api.getColumnState()
-    storage.set(GRID_STATE_KEY, JSON.stringify(columnState))
-  }
+  const vehiclesWithSettings = useMemo(() => vehicles.map(vehicle => ({
+    ...vehicle,
+    revenueData: vehicle.dailyPricing ? calculateMonthlyRevenue(vehicle.dailyPricing, vehicle, includeDiscounts, applyProtectionPlan) : []
+  })), [vehicles, includeDiscounts, applyProtectionPlan]);
+
+  const onColumnStateChanged = useCallback(() => {
+    if (!gridRef.current?.api) return;
+    const columnState = gridRef.current.api.getColumnState();
+    storage.set(GRID_STATE_KEY, JSON.stringify(columnState));
+  }, []);
   
-  // Initialize grid and restore state
-  const onGridReady = (params) => {
-    if (isInitialLoad.current) {
-      isInitialLoad.current = false
-      
-      // Load saved column state
-      storage.get(GRID_STATE_KEY).then(savedState => {
-        if (savedState && params.api) {
-          try {
-            const columnState = JSON.parse(savedState)
-            params.api.applyColumnState({
-              state: columnState,
-              applyOrder: true
-            })
-          } catch (e) {
-            console.error("Failed to parse saved column state", e)
-          }
+
+  const onGridReady = useCallback((params) => {
+    storage.get(GRID_STATE_KEY).then(savedState => {
+      if (savedState && params.api) {
+        try {
+          const parsedState = JSON.parse(savedState);
+          params.api.applyColumnState({ state: parsedState, applyOrder: true });
+        } catch (e) {
+          console.error("Failed to parse saved column state", e);
         }
-      })
-    }
-  }
+      }
+    });
+  }, []);
   
-  // Update rows without losing column state
+  
+  
   useEffect(() => {
-    if (!gridRef.current?.api || vehiclesWithSettings.length === 0) return
-    
-    const api = gridRef.current.api
-    
-    // Check if there are existing rows
-    const hasExistingRows = api.getDisplayedRowCount() > 0
-    
-    // Save current column state before update
-    const columnState = api.getColumnState()
-    
-    if (hasExistingRows) {
-      // Clear rows first
-      api.applyTransaction({
-        remove: api.getRenderedNodes().map(node => node.data)
-      })
-      
-      // Then add new rows
-      api.applyTransaction({
-        add: vehiclesWithSettings
-      })
-    } else {
-      // First time load - just add all rows
-      api.applyTransaction({
-        add: vehiclesWithSettings
-      })
+    if (!gridRef.current?.api || vehiclesWithSettings.length === 0) return;
+    const api = gridRef.current.api;
+  
+    // Save current column state before updating data
+    const columnState = api.getColumnState();
+  
+    // Get new and previous vehicle IDs
+    const currentIds = new Set(vehiclesWithSettings.map(v => v.id));
+    const prevIds = previousVehicleIds.current;
+  
+    // Identify updates, additions, and removals
+    const updates = vehiclesWithSettings.filter(v => {
+      const node = api.getRowNode(v.id.toString());
+      return node && JSON.stringify(node.data) !== JSON.stringify(v);
+    });
+  
+    const additions = vehiclesWithSettings.filter(v => !prevIds.has(v.id));
+  
+    if (updates.length > 0 || additions.length > 0) {
+      api.applyTransactionAsync({
+        update: updates,
+        add: additions
+      });
+  
+      setTimeout(() => {
+        // Restore column state after data changes
+        api.applyColumnState({ state: columnState, applyOrder: true });
+  
+        // Persist column state in storage
+        storage.set(GRID_STATE_KEY, JSON.stringify(columnState));
+      }, 50);
     }
-    
-    // Restore column state after update
-    setTimeout(() => {
-      api.applyColumnState({
-        state: columnState,
-        applyOrder: true
-      })
-    }, 10)
-  }, [vehiclesWithSettings])
-
+  
+    previousVehicleIds.current = currentIds;
+  }, [vehiclesWithSettings]);
+  
+  
+  
+  
   return (
-    <div className="w-full" style={{ height: 'calc(100vh - 160px)' }}>
+    <div className="w-full" style={{ height: "calc(100vh - 160px)" }}>
       <AgGridReact
         ref={(r) => {
-          // Set both refs - our local ref and the forwarded ref
-          gridRef.current = r
-          if (typeof ref === 'function') {
-            ref(r)
+          gridRef.current = r;
+          if (typeof ref === "function") {
+            ref(r);
           } else if (ref) {
-            ref.current = r
+            ref.current = r;
           }
         }}
-        theme={themeQuartz}
-        rowData={[]}
-        getRowId={(params) => params.data.id.toString()}
+        {...gridOptions}
+        rowData={vehiclesWithSettings}
         columnDefs={getColumnDefs()}
         defaultColDef={defaultColDef}
-        enableCellTextSelection={false}
-        animateRows={true}
-        suppressMenuHide={true}
-        tooltipShowDelay={0}
-        tooltipHideDelay={2000}
-        headerHeight={40}
         onGridReady={onGridReady}
         onColumnResized={onColumnStateChanged}
         onColumnMoved={onColumnStateChanged}
@@ -153,10 +139,9 @@ const VehicleTable = forwardRef<AgGridReact, VehicleTableProps>(({ vehicles }, r
         onColumnPinned={onColumnStateChanged}
         onSortChanged={onColumnStateChanged}
         onFilterChanged={onColumnStateChanged}
-        maintainColumnOrder={true}
       />
     </div>
-  )
-})
+  );
+});
 
-export default React.memo(VehicleTable)
+export default React.memo(VehicleTable);
