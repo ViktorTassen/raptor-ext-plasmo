@@ -109,6 +109,9 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
       const data = params.data as Vehicle & { revenueData: any[] }
       return data.revenueData.reduce((acc, item) => acc + item.total, 0).toFixed(2)
     },
+    sortable: false,
+    resizable: false,
+    filter: false,
     minWidth: 240
   },
   {
@@ -124,7 +127,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     minWidth: 120,
   },
   {
-    headerName: "Avg Monthly",
+    headerName: "Avg Monthly Revenue",
     valueGetter: (params: ValueGetterParams<Vehicle>) => {
       const data = params.data as Vehicle & { revenueData: any[] }
       if (!data.revenueData) return 0
@@ -142,7 +145,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     minWidth: 140
   },
   {
-    headerName: "Prev Year",
+    headerName: "Prev Year Revenue",
     valueGetter: (params: ValueGetterParams<Vehicle>) => {
       const data = params.data as Vehicle & { revenueData: any[] }
       if (!data.revenueData) return 0
