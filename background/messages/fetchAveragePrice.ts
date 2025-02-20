@@ -1,4 +1,5 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging"
+import { getAuth } from "firebase/auth"
 
 interface VehicleParams {
   year: number
@@ -8,6 +9,17 @@ interface VehicleParams {
 }
 
 const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
+
+  const auth = getAuth()
+    const currentUser = auth.currentUser
+    
+    if (!currentUser) {
+      throw new Error('User not authenticated')
+    }
+
+    // Get the ID token
+    const idToken = await currentUser.getIdToken()
+    
   try {
     const vehicle = req.body as VehicleParams
     const params = new URLSearchParams({
@@ -20,7 +32,8 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     const response = await fetch(`http://localhost:3000/api/vehicle/market-value?${params}`, {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`
       }
     })
 

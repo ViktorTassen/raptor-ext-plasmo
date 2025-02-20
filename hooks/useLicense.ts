@@ -10,9 +10,13 @@ export const useLicense = (uid: string | undefined) => {
   }>({ license: false, licenseStatus: "loading" })
 
   useEffect(() => {
+    let isMounted = true
+
     const checkLicense = async () => {
       if (!uid) {
-        setLicenseStatus({ license: false, licenseStatus: "no-user" })
+        if (isMounted) {
+          setLicenseStatus({ license: false, licenseStatus: "no-user" })
+        }
         return
       }
 
@@ -24,7 +28,7 @@ export const useLicense = (uid: string | undefined) => {
         )
         const querySnapshot = await getDocs(subscriptionsQuery)
         
-        if (querySnapshot.size > 0) {
+        if (querySnapshot.size > 0 && isMounted) {
           setLicenseStatus({
             license: true,
             licenseStatus: querySnapshot.docs[0].data().status
@@ -38,21 +42,29 @@ export const useLicense = (uid: string | undefined) => {
         const snapshot = await get(legacyStatusRef)
         const legacyStatus = snapshot.val()
 
-        if (legacyStatus === "active" || legacyStatus === "trialing") {
-          setLicenseStatus({
-            license: true,
-            licenseStatus: legacyStatus
-          })
-        } else {
-          setLicenseStatus({ license: false, licenseStatus: "off" })
+        if (isMounted) {
+          if (legacyStatus === "active" || legacyStatus === "trialing") {
+            setLicenseStatus({
+              license: true,
+              licenseStatus: legacyStatus
+            })
+          } else {
+            setLicenseStatus({ license: false, licenseStatus: "off" })
+          }
         }
       } catch (error) {
         console.error("Error checking license:", error)
-        setLicenseStatus({ license: false, licenseStatus: "error" })
+        if (isMounted) {
+          setLicenseStatus({ license: false, licenseStatus: "error" })
+        }
       }
     }
 
     checkLicense()
+
+    return () => {
+      isMounted = false
+    }
   }, [uid])
 
   return licenseStatus

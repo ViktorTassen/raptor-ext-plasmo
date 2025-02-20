@@ -79,6 +79,15 @@ const Modal = ({ onClose }: ModalProps) => {
   })
 
   const licenseStatus = useLicense(user?.uid)
+  const [initialLoading, setInitialLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setInitialLoading(false)
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [enrichProgress, setEnrichProgress] = useState<EnrichmentProgress>({
@@ -101,7 +110,6 @@ const Modal = ({ onClose }: ModalProps) => {
       if (header) {
         header.style.display = ''
       }
-      // Stop enrichment when modal is closed
       if (abortControllerRef.current) {
         abortControllerRef.current.abort()
         abortControllerRef.current = null
@@ -126,7 +134,6 @@ const Modal = ({ onClose }: ModalProps) => {
     fetchVehicles()
   }, [fetchVehicles])
 
-  // Pre-calculate revenue data when vehicles or settings change
   const vehiclesWithRevenue = useMemo(() => {
     return vehicles.map(vehicle => ({
       ...vehicle,
@@ -227,6 +234,21 @@ const Modal = ({ onClose }: ModalProps) => {
         isProcessing: false
       }))
     }
+  }
+
+  if (initialLoading || licenseStatus.licenseStatus === "loading") {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-25 flex justify-start">
+        <div className="w-[95%] max-w-[95%] bg-white h-[calc(100vh)] shadow-xl">
+          <div className="p-6">
+            <div className="flex items-center space-x-4">
+              <img src={iconCropped} alt="Logo" className="w-8 h-8" />
+              <div className="h-8 bg-gray-200 rounded animate-pulse w-24" />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

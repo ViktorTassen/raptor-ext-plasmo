@@ -159,7 +159,7 @@ const AccountTab: FC = () => {
           {/* Help Links - Integrated into profile section */}
           <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
             <a
-              href="https://raptorexplorer.com/docs"
+              href="https://raptorexplorer.com/instructions"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-[#593CFB] transition-colors">

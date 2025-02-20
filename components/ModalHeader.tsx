@@ -1,5 +1,5 @@
 import React from "react"
-import { Download, Settings, Trash2, Crown } from "lucide-react"
+import { Download, Settings, Trash2, Crown, ExternalLink } from "lucide-react"
 import { Button } from "./ui/button"
 import { Separator } from "./ui/separator"
 import type { Vehicle, EnrichmentProgress } from "~types"
@@ -38,10 +38,15 @@ const ModalHeader = ({
   licenseStatus
 }: ModalHeaderProps) => {
   const { isLoading, handleGoogleSignIn } = useAuth()
-
   const enrichedCount = vehicles.filter(v => v.isEnriched).length
 
   const handleUpgradeClick = async () => {
+    await sendToBackground({
+      name: "openOptions"
+    })
+  }
+
+  const handleOpenExtensionPage = async () => {
     await sendToBackground({
       name: "openOptions"
     })
@@ -128,6 +133,30 @@ const ModalHeader = ({
                 </div>
               </>
             )}
+
+            <Separator orientation="vertical" className="h-8" />
+
+            {/* Extension and Help Links */}
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                onClick={handleOpenExtensionPage}
+                className="flex items-center gap-2">
+                <Crown className="h-4 w-4" />
+                Manage Subscription
+              </Button>
+              <a
+                href="https://raptorexplorer.com/instructions"
+                target="_blank"
+                rel="noopener noreferrer">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4" />
+                  Instructions
+                </Button>
+              </a>
+            </div>
 
             <Separator orientation="vertical" className="h-8" />
 
