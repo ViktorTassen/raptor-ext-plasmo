@@ -1,4 +1,4 @@
-import { useState, type FC } from "react"
+import { useState, useEffect, type FC } from "react"
 import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
 import { auth } from "~firebase/firebaseClient"
@@ -17,8 +17,17 @@ const AccountTab: FC = () => {
     instance: storage
   })
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
   const licenseStatus = useLicense(user?.uid)
-  const isLoading = licenseStatus.licenseStatus === "loading"
+  const isLoading = licenseStatus.licenseStatus === "loading" || initialLoading
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setInitialLoading(false)
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   const handleManageClick = async () => {
     setLoading(true)
@@ -53,12 +62,10 @@ const AccountTab: FC = () => {
     }
   }
 
-
   const handleCheckoutClick = async () => {
     setLoading(true)
 
     try {
-
       const response = await fetch('https://raptor3-web.vercel.app/api/create-checkout-session', {
         method: 'POST',
         headers: {
@@ -107,21 +114,34 @@ const AccountTab: FC = () => {
             <Skeleton className="w-10 h-10 rounded-full" />
             <div className="flex-1">
               <Skeleton className="h-5 w-32 mb-2" />
-              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-4 w-48 mb-1" />
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-3 w-3 rounded-full" />
+                <Skeleton className="h-3 w-16" />
+              </div>
             </div>
           </div>
         </div>
 
         {/* License Section Skeleton */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <Skeleton className="h-6 w-24 mb-3" />
-          <Skeleton className="h-4 w-full mb-4" />
+          <Skeleton className="h-5 w-24 mb-3" />
           <div className="space-y-2 mb-4">
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-2/3" />
-            <Skeleton className="h-4 w-4/5" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-4" />
+              <Skeleton className="h-4 w-40" />
+            </div>
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-4 w-4" />
+              <Skeleton className="h-4 w-32" />
+            </div>
           </div>
-          <Skeleton className="h-10 w-full" />
+          <div className="flex items-center justify-between mb-4">
+            <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-9 w-40" />
+          </div>
+          <Skeleton className="h-8 w-full" />
         </div>
 
         {/* Resources Section Skeleton */}
@@ -131,6 +151,11 @@ const AccountTab: FC = () => {
             <Skeleton className="h-4 w-48" />
             <Skeleton className="h-4 w-40" />
           </div>
+        </div>
+
+        {/* Sign Out Button Skeleton */}
+        <div className="mt-auto">
+          <Skeleton className="h-9 w-full" />
         </div>
       </div>
     )
@@ -154,63 +179,47 @@ const AccountTab: FC = () => {
             <h2 className="text-base font-medium text-gray-900 truncate">
               {user.displayName || "My Account"}
             </h2>
-            <div className="flex items-center gap-2">
-              <p className="text-sm text-gray-600 truncate">{user.email}</p>
-             
+            <p className="text-sm text-gray-600 truncate">{user.email}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xs text-gray-400">ID: {user.uid}</span>
+              <span className="text-xs text-gray-400">•</span>
+              <Badge variant={licenseStatus.license ? "success" : "warning"} className="text-xs">
+                {licenseStatus.license ? "Active" : "Free"}
+              </Badge>
             </div>
-            <span className="text-xs text-gray-400">License ID: {user.uid}</span>
           </div>
         </div>
       </div>
 
       {/* License Status & Upgrade Section */}
       {!licenseStatus.license && (
-        <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Badge variant="warning" className="text-xs px-2">Free Plan</Badge>
-              <span className="text-xs text-gray-500">Limited to 5 results</span>
-            </div>
-            
-            <p className="text-sm text-gray-600 mb-4">
-              Upgrade to PRO Membership to get advanced analytics & insights:
-            </p>
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="mb-4">
+            <p className="text-sm text-gray-600">Get advanced analytics & insights:</p>
+          </div>
 
-            <div className="space-y-3 mb-4">
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-[#593CFB]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-sm">Unlimited search results</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-[#593CFB]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-sm">Export data to CSV</span>
-              </div>
+          <div className="space-y-2 mb-4">
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-[#593CFB]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-sm">Unlimited search results and export</span>
             </div>
+          </div>
 
-            <div className="flex items-baseline gap-2 mb-4">
-              <span className="text-2xl font-bold">$14.99</span>
-              <span className="text-sm text-gray-500">/month</span>
-            </div>
-
-            <Button
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-2xl font-bold">$15<span className="text-sm text-gray-500">/mo</span></span>
+          <Button
               onClick={handleCheckoutClick}
-              className="w-full bg-[#593CFB] hover:bg-[#593CFB]/90 text-white">
-              <Crown className="w-4 h-4 mr-2" />
-              Upgrade to Pro
+              className="bg-[#04B101] hover:bg-[#04B101]/90 text-white font-bold">
+              Complete purchase
             </Button>
           </div>
-
-          <div className="px-4 pb-4">
-            <img 
-              src={stripe}
-              alt="Payment methods"
-              className="w-full h-auto"
-            />
-          </div>
+          <img 
+            src={stripe}
+            alt="Payment methods"
+            className="w-full h-auto"
+          />
         </div>
       )}
 
