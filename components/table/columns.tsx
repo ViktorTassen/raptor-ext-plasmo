@@ -115,10 +115,14 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     minWidth: 240
   },
   {
-    field: "avgDailyPrice",
+    field: "avgDailyPrice.amount",
     headerName: "Avg Daily Price",
-    valueGetter: (params: ValueGetterParams<Vehicle>) => params.data?.avgDailyPrice?.amount || 0,
+    valueGetter: (params: ValueGetterParams<Vehicle>) => {
+      const amount = params.data?.avgDailyPrice?.amount
+      return amount != null ? Number(amount) : 0
+    },
     valueFormatter: currencyFormatter,
+    filter: "agNumberColumnFilter",
     filterParams: {
       filterOptions: ["inRange"],
       inRangeInclusive: true,
@@ -137,6 +141,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
         : 0
     },
     valueFormatter: currencyFormatter,
+    filter: "agNumberColumnFilter",
     filterParams: {
       filterOptions: ["inRange"],
       inRangeInclusive: true,
@@ -155,6 +160,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
         .reduce((sum, month) => sum + month.total, 0)
     },
     valueFormatter: currencyFormatter,
+    filter: "agNumberColumnFilter",
     filterParams: {
       filterOptions: ["inRange"],
       inRangeInclusive: true,
@@ -167,29 +173,34 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     valueGetter: (params: ValueGetterParams<Vehicle>) => {
       const data = params.data as Vehicle & { revenueData: any[] }
       const marketValue = data.details?.marketValue
-      const listingDate = data.details?.vehicle?.listingCreatedTime
-      if (!marketValue || !data.revenueData || !listingDate) return null
+      if (!marketValue || !data.revenueData) return null
 
       // Get start of previous year
       const prevYearStart = new Date(new Date().getFullYear() - 1, 0, 1)
       
       // Use listing date if it's later than start of previous year
-      const startDate = new Date(listingDate) > prevYearStart ? new Date(listingDate) : prevYearStart
+      const listingDate = data.details?.vehicle?.listingCreatedTime
+        ? new Date(data.details.vehicle.listingCreatedTime)
+        : null
+      
+      if (listingDate) {
+        const startDate = listingDate > prevYearStart ? listingDate : prevYearStart
+        
+        // Calculate total revenue since start date
+        const totalRevenue = data.revenueData.reduce((sum, month) => {
+          const monthDate = new Date(month.year, new Date(month.fullMonth + ' 1').getMonth())
+          return monthDate.getTime() >= startDate.getTime() ? sum + month.total : sum
+        }, 0)
 
-      // Calculate total revenue since start date
-      const totalRevenue = data.revenueData.reduce((sum, month) => {
-        const monthDate = new Date(month.year, new Date(month.fullMonth + ' 1').getMonth())
-        return monthDate.getTime() >= startDate.getTime() ? sum + month.total : sum
-      }, 0)
+        // Calculate the number of months since start date
+        const currentDate = new Date()
+        const monthsSinceStart = (currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
 
-      // Calculate the number of months since start date
-      const currentDate = new Date()
-      const monthsSinceStart = (currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)
-
-      // Annualize the revenue
-      const annualizedRevenue = (totalRevenue / monthsSinceStart) * 12
-
-      return (annualizedRevenue / marketValue) * 100
+        // Annualize the revenue
+        const annualizedRevenue = (totalRevenue / monthsSinceStart) * 12
+        return (annualizedRevenue / marketValue) * 100
+      }
+      return null
     },
     cellRenderer: (params) => {
       if (params.value == null) return '-'
@@ -208,6 +219,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
         </Badge>
       )
     },
+    filter: "agNumberColumnFilter",
     filterParams: {
       filterOptions: ["inRange"],
       inRangeInclusive: true,
@@ -238,6 +250,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
         </Badge>
       )
     },
+    filter: "agNumberColumnFilter",
     filterParams: {
       filterOptions: ["inRange"],
       inRangeInclusive: true,
@@ -246,14 +259,13 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     minWidth: 100
   },
   {
-    field: "details.marketValue",
     headerName: "Avg Market Value",
-    // valueGetter: (params: ValueGetterParams<Vehicle>) => {
-    //   const marketValue = params.data?.details?.marketValue
-    //   if (!marketValue?.below || !marketValue?.average) return null
-    //   return ((parseFloat(marketValue.below) + parseFloat(marketValue.average)) / 2)
-    // },
+    valueGetter: (params: ValueGetterParams<Vehicle>) => {
+      const marketValue = params.data?.details?.marketValue
+      return marketValue != null ? Number(marketValue) : null
+    },
     valueFormatter: currencyFormatter,
+    filter: "agNumberColumnFilter",
     filterParams: {
       filterOptions: ["inRange"],
       inRangeInclusive: true,
@@ -272,6 +284,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
       return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     },
     valueFormatter: (params) => params.value.toString(),
+    filter: "agNumberColumnFilter",
     filterParams: {
       filterOptions: ["inRange"],
       inRangeInclusive: true,
@@ -282,6 +295,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
   {
     field: "completedTrips",
     headerName: "Trips",
+    filter: "agNumberColumnFilter",
     filterParams: {
       filterOptions: ["inRange"],
       inRangeInclusive: true,
@@ -292,6 +306,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
   {
     field: "details.numberOfFavorites",
     headerName: "Favs",
+    filter: "agNumberColumnFilter",
     filterParams: {
       filterOptions: ["inRange"],
       inRangeInclusive: true,
@@ -313,6 +328,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
   {
     field: "details.numberOfReviews",
     headerName: "Reviews",
+    filter: "agNumberColumnFilter",
     filterParams: {
       filterOptions: ["inRange"],
       inRangeInclusive: true,

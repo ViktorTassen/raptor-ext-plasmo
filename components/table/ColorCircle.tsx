@@ -23,8 +23,9 @@ export function ColorCircle({ color }: ColorCircleProps) {
   const colorStyle = colorMap[capitalizedColor]
 
   return (
-    <div className="flex items-center gap-2">
-      {colorStyle ? (
+
+    <div className="flex items-center gap-2" style={{height:"40px"}}>
+        {colorStyle ? (
         <div
           className="h-4 w-4 rounded-full border border-gray-900"
           style={{
@@ -35,6 +36,6 @@ export function ColorCircle({ color }: ColorCircleProps) {
       ) : (
         <span className="text-sm text-gray-600">{capitalizedColor}</span>
       )}
-    </div>
+  </div>
   )
 }
