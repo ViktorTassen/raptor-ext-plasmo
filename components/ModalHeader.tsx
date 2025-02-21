@@ -46,12 +46,6 @@ const ModalHeader = ({
     })
   }
 
-  const handleOpenExtensionPage = async () => {
-    await sendToBackground({
-      name: "openOptions"
-    })
-  }
-
   return (
     <div className="flex justify-between items-center mb-6">
       <div className="flex items-center space-x-4">
@@ -136,30 +130,6 @@ const ModalHeader = ({
 
             <Separator orientation="vertical" className="h-8" />
 
-            {/* Extension and Help Links */}
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="outline"
-                onClick={handleOpenExtensionPage}
-                className="flex items-center gap-2">
-                <Crown className="h-4 w-4" />
-                Manage Subscription
-              </Button>
-              <a
-                href="https://raptorexplorer.com/instructions"
-                target="_blank"
-                rel="noopener noreferrer">
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2">
-                  <ExternalLink className="h-4 w-4" />
-                  Instructions
-                </Button>
-              </a>
-            </div>
-
-            <Separator orientation="vertical" className="h-8" />
-
             {/* Settings */}
             <Button
               variant="secondary"
@@ -168,6 +138,23 @@ const ModalHeader = ({
               <Settings className="h-5 w-5" />
               Settings
             </Button>
+            
+            <Separator orientation="vertical" className="h-8" />
+            {/* Extension and Help Links */}
+            <div className="flex items-center space-x-4">
+              <a
+                href="https://raptorexplorer.com/instructions"
+                target="_blank"
+                rel="noopener noreferrer">
+                <Button
+                  variant="link"
+                  className="flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4" />
+                  Instructions
+                </Button>
+              </a>
+            </div>
+
           </>
         )}
       </div>

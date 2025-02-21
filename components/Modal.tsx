@@ -265,7 +265,7 @@ const Modal = ({ onClose }: ModalProps) => {
               onRecordingToggle={handleRecordingToggle}
               onEnrichData={handleEnrichData}
               onStopEnrichment={stopEnrichment}
-              onExportData={() => exportVehiclesData(vehiclesWithRevenue)}
+              onExportData={() => exportVehiclesData(vehiclesWithRevenue, includeDiscounts, applyProtectionPlan)}
               onClearData={() => setIsClearConfirmOpen(true)}
               onOpenSettings={() => setIsSettingsOpen(true)}
               onClose={handleClose}

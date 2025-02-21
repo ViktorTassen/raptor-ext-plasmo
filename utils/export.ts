@@ -39,15 +39,21 @@ export function downloadCSV<T extends Record<string, any>>(data: T[], filename: 
   }
 }
 
-export function exportVehiclesData(vehicles: Vehicle[]) {
+export function exportVehiclesData(vehicles: Vehicle[], includeDiscounts: boolean = false, applyProtectionPlan: boolean = false) {
+  const settingsInfo = [
+    includeDiscounts ? "Weekly/Monthly Discounts Applied" : "",
+    applyProtectionPlan ? "Protection Plan Rate Applied" : ""
+  ].filter(Boolean).join(", ")
+
   const exportData = vehicles.map(vehicle => ({
     type: getVehicleTypeDisplay(vehicle.type),
     make: vehicle.make,
     model: vehicle.model,
     trim: vehicle.details?.vehicle?.trim || '',
     year: vehicle.year,
-    avgMonthlyRevenue: !vehicle.dailyPricing ? 0 : calculateAverageMonthlyRevenue(vehicle.dailyPricing),
-    prevYearRevenue: !vehicle.dailyPricing ? 0 : calculatePreviousYearRevenue(vehicle.dailyPricing),
+    avgMonthlyRevenue: !vehicle.dailyPricing ? 0 : calculateAverageMonthlyRevenue(vehicle.dailyPricing, vehicle, includeDiscounts, applyProtectionPlan),
+    prevYearRevenue: !vehicle.dailyPricing ? 0 : calculatePreviousYearRevenue(vehicle.dailyPricing, vehicle, includeDiscounts, applyProtectionPlan),
+    revenueSettings: settingsInfo || 'No adjustments applied',
     marketValue: vehicle.details?.marketValue || '',
     daysOnTuro: vehicle.details?.vehicle?.listingCreatedTime ? Math.ceil(
       Math.abs(new Date().getTime() - new Date(vehicle.details.vehicle.listingCreatedTime).getTime()) / 

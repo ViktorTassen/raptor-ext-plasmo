@@ -13,6 +13,7 @@
     "@ag-grid-community/client-side-row-model": "^32.3.3",
     "@plasmohq/messaging": "^0.6.2",
     "@plasmohq/storage": "^1.15.0",
+    "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
     "@radix-ui/react-popover": "^1.0.6",
     "@radix-ui/react-separator": "^1.1.2",

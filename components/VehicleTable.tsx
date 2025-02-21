@@ -58,7 +58,7 @@ const VehicleTable = forwardRef<AgGridReact, VehicleTableProps>(({ vehicles }, r
   })), [vehicles, includeDiscounts, applyProtectionPlan]);
   
   return (
-    <div className="w-full" style={{ height: "calc(100vh - 160px)" }}>
+    <div className="w-full" style={{ height: "calc(100vh - 120px)" }}>
       <AgGridReact
         ref={(r) => {
           gridRef.current = r;

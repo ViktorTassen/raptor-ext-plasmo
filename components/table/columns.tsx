@@ -93,7 +93,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     headerName: "Year",
     filter: "agNumberColumnFilter",
     filterParams: {
-      filterOptions: ["inRange"],
+      filterOptions: ["inRange", "greaterThanOrEqual", "lessThanOrEqual"],
       inRangeInclusive: true,
       maxNumConditions: 1
     },
@@ -124,7 +124,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     valueFormatter: currencyFormatter,
     filter: "agNumberColumnFilter",
     filterParams: {
-      filterOptions: ["inRange"],
+      filterOptions: ["inRange", "greaterThanOrEqual", "lessThanOrEqual"],
       inRangeInclusive: true,
       maxNumConditions: 1
     },
@@ -143,7 +143,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     valueFormatter: currencyFormatter,
     filter: "agNumberColumnFilter",
     filterParams: {
-      filterOptions: ["inRange"],
+      filterOptions: ["inRange", "greaterThanOrEqual", "lessThanOrEqual"],
       inRangeInclusive: true,
       maxNumConditions: 1
     },
@@ -162,7 +162,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     valueFormatter: currencyFormatter,
     filter: "agNumberColumnFilter",
     filterParams: {
-      filterOptions: ["inRange"],
+      filterOptions: ["inRange", "greaterThanOrEqual", "lessThanOrEqual"],
       inRangeInclusive: true,
       maxNumConditions: 1
     },
@@ -221,7 +221,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     },
     filter: "agNumberColumnFilter",
     filterParams: {
-      filterOptions: ["inRange"],
+      filterOptions: ["inRange", "greaterThanOrEqual", "lessThanOrEqual"],
       inRangeInclusive: true,
       maxNumConditions: 1
     },
@@ -252,7 +252,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     },
     filter: "agNumberColumnFilter",
     filterParams: {
-      filterOptions: ["inRange"],
+      filterOptions: ["inRange", "greaterThanOrEqual", "lessThanOrEqual"],
       inRangeInclusive: true,
       maxNumConditions: 1
     },
@@ -267,7 +267,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     valueFormatter: currencyFormatter,
     filter: "agNumberColumnFilter",
     filterParams: {
-      filterOptions: ["inRange"],
+      filterOptions: ["inRange", "greaterThanOrEqual", "lessThanOrEqual"],
       inRangeInclusive: true,
       maxNumConditions: 1
     },
@@ -286,7 +286,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     valueFormatter: (params) => params.value.toString(),
     filter: "agNumberColumnFilter",
     filterParams: {
-      filterOptions: ["inRange"],
+      filterOptions: ["inRange", "greaterThanOrEqual", "lessThanOrEqual"],
       inRangeInclusive: true,
       maxNumConditions: 1
     },
@@ -297,7 +297,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     headerName: "Trips",
     filter: "agNumberColumnFilter",
     filterParams: {
-      filterOptions: ["inRange"],
+      filterOptions: ["inRange", "greaterThanOrEqual", "lessThanOrEqual"],
       inRangeInclusive: true,
       maxNumConditions: 1
     },
@@ -308,7 +308,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     headerName: "Favs",
     filter: "agNumberColumnFilter",
     filterParams: {
-      filterOptions: ["inRange"],
+      filterOptions: ["inRange", "greaterThanOrEqual", "lessThanOrEqual"],
       inRangeInclusive: true,
       maxNumConditions: 1
     },
@@ -330,7 +330,7 @@ export const getColumnDefs = (): ColDef<Vehicle>[] => [
     headerName: "Reviews",
     filter: "agNumberColumnFilter",
     filterParams: {
-      filterOptions: ["inRange"],
+      filterOptions: ["inRange", "greaterThanOrEqual", "lessThanOrEqual"],
       inRangeInclusive: true,
       maxNumConditions: 1
     },
