@@ -1,5 +1,7 @@
 import { Storage } from "@plasmohq/storage"
 import RaptorDB from "~db"
+declare const self: ServiceWorkerGlobalScope;
+
 
 const storage = new Storage({ area: "local" })
 
@@ -76,8 +78,7 @@ import { authenticateWithFirebase } from "~firebase/firebaseClient"
 let creatingOffscreenDocument;
 
 async function hasOffscreenDocument() {
-    // @ts-ignore
-    const matchedClients = await clients.matchAll();
+  const matchedClients = await self.clients.matchAll()
     return matchedClients.some(
         (c) => c.url === chrome.runtime.getURL(OFFSCREEN_DOCUMENT_PATH),
     )

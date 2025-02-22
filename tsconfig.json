@@ -9,6 +9,7 @@
     "./**/*.tsx"
 , "components/RaptorExplorerButton"  ],
   "compilerOptions": {
+    "lib": ["dom", "es2021", "webworker"],
     "paths": {
       "~*": [
         "./*"

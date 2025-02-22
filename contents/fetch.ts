@@ -20,7 +20,7 @@ window.fetch = async function (...args) {
       const clonedResponse = response.clone()
       const json = await clonedResponse.json()
 
-      if (json.vehicles) {
+      if (json?.vehicles) {
         console.log('[Raptor] Intercepted vehicles:', json.vehicles.length)
         window.dispatchEvent(new CustomEvent('vehicles', {
           detail: { 
@@ -34,7 +34,7 @@ window.fetch = async function (...args) {
       return response
     }
   } catch (error) {
-    console.error("[Raptor] Error in fetch:", error)
+    console.warn("[Raptor] Error in fetch:", error)
     return originalFetch(...args)
   }
 }

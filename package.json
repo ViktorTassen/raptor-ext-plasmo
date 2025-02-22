@@ -54,7 +54,8 @@
       "https://raptor3-web.vercel.app/*",
       "https://raptorexplorer.com/*",
       "http://localhost:3000/*",
-      "https://turo.com/*"
+      "https://turo.com/*",
+      "https://turrex-fb3ca.web.app/*"
     ],
     "permissions": [
       "storage",

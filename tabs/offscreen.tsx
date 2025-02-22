@@ -1,4 +1,4 @@
-const HOSTING_URL = "https://raptor3-web.vercel.app/sign-in-popup";
+const HOSTING_URL = "https://turrex-fb3ca.web.app";
 
 const iframe = document.createElement('iframe');
 iframe.src = HOSTING_URL;
@@ -39,6 +39,12 @@ function Offscreen() {
 
 
 export default Offscreen;
+
+
+
+
+
+
 
 
 
