@@ -30,25 +30,13 @@ const VehicleTable = forwardRef<AgGridReact, VehicleTableProps>(({ vehicles }, r
     filterParams: { buttons: ["reset", "apply"], closeOnApply: true },
     autoHeight: true,
     flex: 1,
-    valueCache: true,
-    suppressMenu: true,
   }), []);
 
   const gridOptions = useMemo(() => ({
     animateRows: true,
-    rowBuffer: 10,
+    rowBuffer: 30,
     rowModelType: "clientSide" as RowModelType,
-    paginationPageSize: 50,
-    cacheBlockSize: 50,
-    suppressCellFlash: true,
-    suppressRowDrag: true,
-    suppressColumnVirtualisation: true,
-    suppressClipboardPaste: true,
-    suppressCellSelection: true,
-    deltaRowDataMode: true,
     maintainColumnOrder: true,
-    suppressPropertyNamesCheck: true,
-    suppressReactUi: false,
     getRowId: (params) => params.data.id.toString(),
   }), []);
 

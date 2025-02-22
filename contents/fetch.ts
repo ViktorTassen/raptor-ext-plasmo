@@ -3,7 +3,7 @@ import type { PlasmoCSConfig } from "plasmo"
 export const config: PlasmoCSConfig = {
   matches: ["https://turo.com/*"],
   world: "MAIN",
-  run_at: "document_start"
+  run_at: "document_end"
 }
 
 
