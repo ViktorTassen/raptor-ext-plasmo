@@ -80,6 +80,7 @@ const Modal = ({ onClose }: ModalProps) => {
 
   const licenseStatus = useLicense(user?.uid)
   const [initialLoading, setInitialLoading] = useState(true)
+  const [enrichedCount, setEnrichedCount] = useState(0)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -124,6 +125,7 @@ const Modal = ({ onClose }: ModalProps) => {
       })
       if (response.success) {
         setVehicles(response.vehicles)
+        setEnrichedCount(response.vehicles.filter(v => v.isEnriched).length)
       }
     } catch (error) {
       console.error('[Raptor] Error fetching vehicles:', error)
@@ -153,6 +155,7 @@ const Modal = ({ onClose }: ModalProps) => {
         name: "clearVehicles"
       })
       setVehicles([])
+      setEnrichedCount(0)
       setIsClearConfirmOpen(false)
     } catch (error) {
       console.error('[Raptor] Error clearing vehicles:', error)
@@ -184,6 +187,15 @@ const Modal = ({ onClose }: ModalProps) => {
       return
     }
 
+    // Check if we're about to exceed the limit for free users
+    const currentEnrichedCount = vehicles.filter(v => v.isEnriched).length
+    const remainingFreeSlots = !licenseStatus.license ? Math.max(0, 5 - currentEnrichedCount) : unenrichedVehicles.length
+    
+    if (remainingFreeSlots === 0) {
+      alert("Free users can only enrich up to 5 vehicles. To enrich more vehicles clear the table data or upgrade to PRO to enrich unlimited vehicles.")
+      return
+    }
+
     if (isRecording) {
       setIsRecording(false)
     }
@@ -191,18 +203,23 @@ const Modal = ({ onClose }: ModalProps) => {
     try {
       abortControllerRef.current = new AbortController()
 
+      // Only process up to the remaining free slots for free users
+      const vehiclesToProcess = !licenseStatus.license 
+        ? unenrichedVehicles.slice(0, remainingFreeSlots)
+        : unenrichedVehicles
+
       setEnrichProgress({
         current: 0,
-        total: unenrichedVehicles.length,
+        total: vehiclesToProcess.length,
         isProcessing: true
       })
 
-      for (let i = 0; i < unenrichedVehicles.length; i++) {
+      for (let i = 0; i < vehiclesToProcess.length; i++) {
         if (!abortControllerRef.current || abortControllerRef.current.signal.aborted) {
           break
         }
 
-        const vehicle = unenrichedVehicles[i]
+        const vehicle = vehiclesToProcess[i]
         const enrichedVehicle = await enrichVehicle(vehicle, abortControllerRef.current.signal)
 
         if (enrichedVehicle) {
@@ -218,12 +235,19 @@ const Modal = ({ onClose }: ModalProps) => {
             newArray[index] = enrichedVehicle
             return newArray
           })
+          
+          setEnrichedCount(prev => prev + 1)
         }
 
         setEnrichProgress(prev => ({
           ...prev,
           current: i + 1
         }))
+      }
+
+      // Show the limit message after processing is complete for free users
+      if (!licenseStatus.license && currentEnrichedCount + remainingFreeSlots >= 5) {
+        alert("Free users can only enrich up to 5 vehicles. To enrich more vehicles clear the table data or upgrade to PRO to enrich unlimited vehicles.")
       }
     } catch (error) {
       console.error("[Raptor] Error enriching vehicles:", error)
@@ -235,6 +259,8 @@ const Modal = ({ onClose }: ModalProps) => {
       }))
     }
   }
+
+  const isEnrichDisabled = !licenseStatus.license && enrichedCount >= 5
 
   if (initialLoading || licenseStatus.licenseStatus === "loading") {
     return (
@@ -271,6 +297,7 @@ const Modal = ({ onClose }: ModalProps) => {
               onClose={handleClose}
               user={user}
               licenseStatus={licenseStatus}
+              isEnrichDisabled={isEnrichDisabled}
             />
             <VehicleTable vehicles={vehiclesWithRevenue} />
           </div>

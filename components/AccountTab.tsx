@@ -213,7 +213,7 @@ const AccountTab: FC = () => {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-baseline gap-0.5">
                 <span className="text-lg text-gray-400">$</span>
-                <span className="text-3xl font-bold text-gray-900">15</span>
+                <span className="text-3xl font-bold text-gray-900">14.99</span>
                 <span className="text-xs text-gray-500">/mo</span>
               </div>
               <Button

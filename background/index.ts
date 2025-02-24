@@ -38,6 +38,11 @@ export const db = new RaptorDB()
 
 // Handle database initialization
 chrome.runtime.onInstalled.addListener(async (details) => {
+  if (details.reason === 'chrome_update') {
+    console.log('[Raptor] Browser update detected, skipping database initialization')
+    return
+  }
+  
   if (details.reason === 'install') {
     console.log('[Raptor] Extension installed, initializing database')
     try {
