@@ -13,7 +13,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     // You don't care about them in this context, so return early.
                     return;
                   }
-                console.log("data", data);
+                //console.log("data", data);
                 const parsedData = JSON.parse(data);
                 window.removeEventListener('message', handleIframeMessage);
                 sendResponse(parsedData.user);

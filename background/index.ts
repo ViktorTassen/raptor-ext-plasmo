@@ -18,7 +18,7 @@ chrome.webRequest.onBeforeRequest.addListener(
         }
 
         if (searchParams.startDate && searchParams.endDate) {
-          console.log('[Raptor] Search params intercepted:', searchParams)
+          //console.log('[Raptor] Search params intercepted:', searchParams)
           // Store params asynchronously without awaiting
           storage.set("searchParams", searchParams).catch(error => {
             console.error('[Raptor] Error saving search params:', error)
@@ -39,12 +39,12 @@ export const db = new RaptorDB()
 // Handle database initialization
 chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'chrome_update') {
-    console.log('[Raptor] Browser update detected, skipping database initialization')
+    //console.log('[Raptor] Browser update detected, skipping database initialization')
     return
   }
-  
+
   if (details.reason === 'install') {
-    console.log('[Raptor] Extension installed, initializing database')
+    //console.log('[Raptor] Extension installed, initializing database')
     try {
       await db.initialize()
     } catch (error) {
@@ -70,7 +70,7 @@ chrome.runtime.onStartup.addListener(async () => {
 // // Clean up on uninstall
 // chrome.runtime.setUninstallURL("", () => {
 //   db.delete().then(() => {
-//     console.log('[Raptor] Database deleted successfully')
+//     //console.log('[Raptor] Database deleted successfully')
 //   }).catch(error => {
 //     console.error('[Raptor] Error deleting database:', error)
 //   })
@@ -128,7 +128,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     email: user.email,
                     displayName: user.displayName
                 }
-                console.log("User signed in:", user)
+                //console.log("User signed in:", user)
                 // Authenticate Firebase with the access token
                 if (user.uid) {
                     await authenticateWithFirebase(user.uid)
@@ -149,12 +149,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 
 chrome.runtime.onInstalled.addListener((details) => {
-    console.log('Extension installed or updated:', details);
+    //console.log('Extension installed or updated:', details);
     if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
-        console.log('This is a new installation.');
+        //console.log('This is a new installation.');
         chrome.tabs.create({ url: "tabs/welcome.html" });
     } else if (details.reason === chrome.runtime.OnInstalledReason.UPDATE) {
-        console.log('Extension updated from version', details.previousVersion);
+        //console.log('Extension updated from version', details.previousVersion);
     }
 });
 

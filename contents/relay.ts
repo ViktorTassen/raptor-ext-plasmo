@@ -8,7 +8,7 @@ export const config: PlasmoCSConfig = {
 }
 
 window.addEventListener('vehicles', async (event: CustomEvent) => {
-    console.log('[Raptor] Vehicles event received')
+    //console.log('[Raptor] Vehicles event received')
     const rawVehicles = event.detail.vehicles
 
     // Transform the data to keep only required fields
@@ -43,7 +43,7 @@ window.addEventListener('vehicles', async (event: CustomEvent) => {
           }
         })
       
-        console.log('[Raptor] Background script response:', response)
+        //console.log('[Raptor] Background script response:', response)
 
       } catch (error) {
         console.error('[Raptor] Error sending to background:', error)

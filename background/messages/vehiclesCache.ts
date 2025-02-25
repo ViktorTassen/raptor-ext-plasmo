@@ -11,19 +11,19 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     // Check recording status first
     const isRecording = await storage.get<boolean>("isRecording")
     if (!isRecording) {
-      console.log('[Raptor] Recording is disabled, skipping data storage')
+      //console.log('[Raptor] Recording is disabled, skipping data storage')
       res.send({ success: false, reason: 'recording_disabled' })
       return
     }
     
-    console.log('[Raptor] Background received vehicles:', vehicles.length)
+    //console.log('[Raptor] Background received vehicles:', vehicles.length)
     
     // Get existing vehicle IDs
     const existingIds = new Set(await db.vehicles.orderBy('id').primaryKeys())
     
     // Filter out vehicles that already exist
     const newVehicles = vehicles.filter(v => !existingIds.has(v.id))
-    console.log('[Raptor] Stored', newVehicles.length, 'new vehicles in IndexedDB')
+    //console.log('[Raptor] Stored', newVehicles.length, 'new vehicles in IndexedDB')
     await storage.set("newVehiclesCount", {qty: newVehicles.length, id: Math.random()} )
     
     if (newVehicles.length > 0) {

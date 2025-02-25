@@ -19,7 +19,7 @@ export async function fetchMarketValue(vehicle: Vehicle, trim?: string) {
 
     return response
   } catch (error) {
-    console.log('[Auto API] Error fetching listings:', error)
+    //console.log('[Auto API] Error fetching listings:', error)
     return null
   }
 }

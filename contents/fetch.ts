@@ -7,7 +7,7 @@ export const config: PlasmoCSConfig = {
 }
 
 
-console.log('fdfdfd')
+//console.log('fdfdfd')
 const originalFetch = window.fetch
 window.fetch = async function (...args) {
   try {
@@ -21,7 +21,7 @@ window.fetch = async function (...args) {
       const json = await clonedResponse.json()
 
       if (json?.vehicles) {
-        console.log('[Raptor] Intercepted vehicles:', json.vehicles.length)
+        //console.log('[Raptor] Intercepted vehicles:', json.vehicles.length)
         window.dispatchEvent(new CustomEvent('vehicles', {
           detail: { 
             vehicles: json.vehicles

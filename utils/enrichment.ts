@@ -89,7 +89,7 @@ async function fetchVehicleDetails(vehicleId: number): Promise<VehicleDetails | 
   })
 
   try {
-    console.log(`[Raptor] Fetching details for vehicle ${vehicleId}`)
+    //console.log(`[Raptor] Fetching details for vehicle ${vehicleId}`)
     const response = await fetch(`${baseUrl}?${params}`)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -159,7 +159,7 @@ async function fetchVehicleDailyPricing(vehicleId: number) {
   })
 
   try {
-    console.log(`[Raptor] Fetching daily pricing for vehicle ${vehicleId}`)
+    //console.log(`[Raptor] Fetching daily pricing for vehicle ${vehicleId}`)
     const response = await fetch(`${baseUrl}?${params}`)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -196,9 +196,9 @@ export async function enrichVehicle(
     const currentTime = Date.now()
     if (lastEnrichmentTime) {
       const timeSinceLastEnrichment = currentTime - lastEnrichmentTime
-      console.log(`[Raptor] Starting enrichment for vehicle ${vehicle.id} (${timeSinceLastEnrichment}ms since last enrichment)`)
+      //console.log(`[Raptor] Starting enrichment for vehicle ${vehicle.id} (${timeSinceLastEnrichment}ms since last enrichment)`)
     } else {
-      console.log(`[Raptor] Starting enrichment for vehicle ${vehicle.id} (first enrichment)`)
+      //console.log(`[Raptor] Starting enrichment for vehicle ${vehicle.id} (first enrichment)`)
     }
 
     const details = await fetchVehicleDetails(vehicle.id)
@@ -228,7 +228,7 @@ export async function enrichVehicle(
 
       const completionTime = Date.now()
       const enrichmentDuration = completionTime - currentTime
-      console.log(`[Raptor] Completed enrichment for vehicle ${vehicle.id} (took ${enrichmentDuration}ms)`)
+      //console.log(`[Raptor] Completed enrichment for vehicle ${vehicle.id} (took ${enrichmentDuration}ms)`)
       
       lastEnrichmentTime = completionTime
       return enrichedVehicle

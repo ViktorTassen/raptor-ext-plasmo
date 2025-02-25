@@ -45,7 +45,7 @@ function Notification() {
         storage.watch({
             "newVehiclesCount": (c) => {
                 // open snackbar with message 
-                console.log("Unique vehicles added: +" + c.newValue)
+                //console.log("Unique vehicles added: +" + c.newValue)
                 setShow(true)
                 const timer = setTimeout(() => {
                     setShow(false)
