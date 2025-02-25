@@ -21,7 +21,6 @@ const waitForTuroApiDelay = async () => {
     
     if (timeSinceLastCall < minDelay) {
       const waitTime = minDelay - timeSinceLastCall
-      console.log(`[Raptor] Waiting ${waitTime}ms before next Turo API call`)
       await delay(waitTime)
     }
   }
