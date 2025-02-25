@@ -2,7 +2,7 @@
   "name": "raptor-ext-plasmo",
   "displayName": "Raptor Explorer - Car Rental Analytics for Turo",
   "version": "3.0",
-  "description": "Discover the most profitable cars on Turo with a pro analytics tool for Turo hosts. Maximize Turo ROI. Better than a Turo calculator",
+  "description": "Discover the ROI of the most profitable cars on Turo. Go beyond a Turo calculator with pro analytics for hosts.",
   "author": "admin@westwanted.com", 
   "scripts": {
     "dev": "plasmo dev",
