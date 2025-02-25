@@ -22,9 +22,9 @@ export class RaptorDB extends Dexie {
     })
 
     // Add hooks for debugging
-    this.on('ready', () => //console.log('[Raptor] Database ready'))
-    this.on('versionchange', () => //console.log('[Raptor] Database version changed'))
-    this.on('blocked', () => //console.log('[Raptor] Database blocked'))
+    this.on('ready', () => console.log('[Raptor] Database ready'))
+    this.on('versionchange', () => console.log('[Raptor] Database version changed'))
+    this.on('blocked', () => console.log('[Raptor] Database blocked'))
   }
 
   // Helper method to ensure database is open
@@ -41,7 +41,7 @@ export class RaptorDB extends Dexie {
       // Create initial tables if they don't exist
       await this.vehicles.count() // This will create the table if it doesn't exist
       await this.searchParams.count()
-      //console.log('[Raptor] Database initialized successfully')
+      console.log('[Raptor] Database initialized successfully')
     } catch (error) {
       console.error('[Raptor] Error initializing database:', error)
       throw error
