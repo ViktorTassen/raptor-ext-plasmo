@@ -30,9 +30,21 @@ function getMonthKey(date: string): string {
 function initializeMonths(currency: string = 'USD'): { [key: string]: { total: number; currency: string } } {
   const months: { [key: string]: { total: number; currency: string } } = {}
   const today = new Date()
+  const currentMonth = today.getMonth()
+  const currentYear = today.getFullYear()
   
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(today.getFullYear(), today.getMonth() - i)
+  // Start from last month and go back 12 months
+  for (let i = 1; i <= 12; i++) {
+    let month = currentMonth - i
+    let year = currentYear
+    
+    // Adjust year if we go into previous year
+    if (month < 0) {
+      month += 12
+      year--
+    }
+    
+    const d = new Date(year, month)
     const monthKey = d.toISOString().substring(0, 7)
     months[monthKey] = { total: 0, currency }
   }
@@ -43,8 +55,12 @@ function initializeMonths(currency: string = 'USD'): { [key: string]: { total: n
 export const calculateUtilizationRate = (pricing: DailyPricing[] | undefined, listingDate?: string): number => {
   if (!Array.isArray(pricing) || pricing.length === 0) return 0
   
+  const today = new Date()
+  const currentMonth = today.getMonth()
+  const currentYear = today.getFullYear()
+  
   // Get start of previous year
-  const prevYearStart = new Date(new Date().getFullYear() - 1, 0, 1)
+  const prevYearStart = new Date(currentYear - 1, 0, 1)
   
   // Use listing date if it's later than start of previous year
   let startDate = prevYearStart
@@ -55,8 +71,13 @@ export const calculateUtilizationRate = (pricing: DailyPricing[] | undefined, li
     }
   }
 
-  // Filter pricing to only include dates after start date
-  const relevantPricing = pricing.filter(day => new Date(day.date) >= startDate)
+  // Filter pricing to only include dates after start date and before current month
+  const relevantPricing = pricing.filter(day => {
+    const dayDate = new Date(day.date)
+    return dayDate >= startDate && 
+           (dayDate.getFullYear() < currentYear || 
+            (dayDate.getFullYear() === currentYear && dayDate.getMonth() < currentMonth))
+  })
   
   if (relevantPricing.length === 0) return 0
   
@@ -73,9 +94,19 @@ export const calculateMonthlyRevenue = (
   if (!Array.isArray(pricing) || pricing.length === 0) {
     const months = []
     const today = new Date()
+    const currentMonth = today.getMonth()
     
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(today.getFullYear(), today.getMonth() - i)
+    // Start from last month and go back 12 months
+    for (let i = 1; i <= 12; i++) {
+      let month = currentMonth - i
+      let year = today.getFullYear()
+      
+      if (month < 0) {
+        month += 12
+        year--
+      }
+      
+      const d = new Date(year, month)
       months.push({
         name: d.toLocaleString('en-US', { month: 'short' }),
         fullMonth: d.toLocaleString('en-US', { month: 'long' }),
@@ -95,8 +126,12 @@ export const calculateMonthlyRevenue = (
     return calculateMonthlyRevenue(undefined)
   }
 
+  const today = new Date()
+  const currentMonth = today.getMonth()
+  const currentYear = today.getFullYear()
+  
   // Get start of previous year
-  const prevYearStart = new Date(new Date().getFullYear() - 1, 0, 1)
+  const prevYearStart = new Date(currentYear - 1, 0, 1)
   
   // Use listing date if it's later than start of previous year
   let startDate = prevYearStart
@@ -107,10 +142,15 @@ export const calculateMonthlyRevenue = (
     }
   }
 
-  // Filter pricing data to only include dates after start date
+  // Filter pricing data to only include dates after start date and before current month
   const relevantPricing = pricing
     .filter(p => p?.priceWithCurrency)
-    .filter(day => new Date(day.date) >= startDate)
+    .filter(day => {
+      const dayDate = new Date(day.date)
+      return dayDate >= startDate && 
+             (dayDate.getFullYear() < currentYear || 
+              (dayDate.getFullYear() === currentYear && dayDate.getMonth() < currentMonth))
+    })
 
   if (relevantPricing.length === 0) {
     return calculateMonthlyRevenue(undefined)

@@ -29,7 +29,7 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
       ...(vehicle.trim && { trim: vehicle.trim.join(',') })
     })
 
-    const response = await fetch(`http://localhost:3000/api/vehicle/market-value?${params}`, {
+    const response = await fetch(`https://raptor3-web.vercel.app/api/vehicle/market-value?${params}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

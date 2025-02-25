@@ -83,7 +83,7 @@ const AccountTab: FC = () => {
         throw new Error(error)
       }
 
-      window.open(url, '_blank')
+      window.open(url)
     } catch (error) {
       console.error('Error creating checkout session:', error)
     } finally {
