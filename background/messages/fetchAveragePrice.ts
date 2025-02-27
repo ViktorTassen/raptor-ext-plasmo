@@ -1,5 +1,5 @@
 import type { PlasmoMessaging } from "@plasmohq/messaging"
-import { getAuth } from "firebase/auth"
+import { getAuth } from "firebase/auth/web-extension"
 
 interface VehicleParams {
   year: number
